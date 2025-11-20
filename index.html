@@ -3,1287 +3,1825 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CivicGo 互動原型 (簡化版)</title>
-    <!-- 載入 Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
-    <!-- 載入 Inter 字型 --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- 載入 Font Awesome 圖示庫 --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>CivicGo 2.0 - 讓改變從巷口開始</title>
+    <!-- 載入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 設定自定義顏色配置 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#14b8a6', /* Teal-500: 清新、信任 */
+                        primaryDark: '#0f766e',
+                        secondary: '#f59e0b', /* Amber-500: 溫暖、活力 */
+                        bgBase: '#f0fdfa', 
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 3s ease-in-out infinite',
+                        'grow': 'grow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                        'sway': 'sway 2s ease-in-out infinite alternate',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        },
+                        grow: {
+                            '0%': { transform: 'scale(0) translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'scale(1) translateY(0)', opacity: '1' },
+                        },
+                        sway: {
+                            '0%': { transform: 'rotate(-5deg)' },
+                            '100%': { transform: 'rotate(5deg)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)' },
+                            '100%': { transform: 'translateY(0)' },
+                        },
+                        glow: {
+                            '0%': { filter: 'drop-shadow(0 0 2px #fcd34d)' },
+                            '100%': { filter: 'drop-shadow(0 0 8px #f59e0b)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- 載入 Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
         body {
-            font-family: 'Inter', 'Noto Sans TC', sans-serif;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             min-height: 100vh;
-            padding: 2rem;
-            background-color: #E5E7EB; /* 頁面背景色 */
+            background-color: #e0e7ff; /* 外部背景色 */
+            margin: 0;
+            padding: 0; /* 全螢幕模式 */
         }
-        /* 模擬手機外框 */
-        .mobile-shell {
-            width: 414px; 
-            max-width: 100%; 
-            aspect-ratio: 9 / 16; 
-            max-height: 90vh; 
-            border-radius: 2.5rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+
+        /* 手機容器：全螢幕模式 */
+        .app-container {
+            width: 100%;
+            height: 100vh;
+            background-color: #f8fafc;
             position: relative;
-            background-color: #f7fafc;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
-        .mobile-content {
-             width: 100%;
-             height: 100%;
-             flex-grow: 1;
-             display: flex;
-             flex-direction: column;
-             overflow: hidden; 
+
+        /* 隱藏滾動條但保留功能 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        /* 模擬 LINE MINI App 的頂部導航列 */
-        .mini-app-header {
-            background-color: #ffffff;
-            border-bottom: 1px solid #e2e8f0;
-            flex-shrink: 0; 
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
-        /* 隱藏/顯示畫面的 class */
+
+        /* 頁面切換邏輯 */
         .page {
-            display: none; 
+            display: none;
+            flex-direction: column;
             width: 100%;
+            height: 100%;
             position: absolute;
             top: 0;
             left: 0;
-            height: 100%; 
-            flex-direction: column;
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            background-color: #f8fafc;
         }
         .page.active {
-            display: flex; 
-        }
-        /* 任務圖釘的樣式 */
-        .task-pin {
-            position: absolute;
-            transform: translate(-50%, -50%); 
-            cursor: pointer;
-            transition: all 0.2s ease-in-out;
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgba(255, 255, 255, 0.8);
-            border: 2px solid;
-            backdrop-filter: blur(4px);
+            opacity: 1;
+            z-index: 10;
         }
 
-        /* 新增：任務執行中標籤 */
-        .task-label {
-            display: none; /* 預設隱藏 */
+        /* 底部導航 */
+        .bottom-nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid #f1f5f9;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        }
+
+        .nav-item {
+            transition: all 0.3s;
+            color: #94a3b8;
+        }
+        .nav-item.active {
+            color: #14b8a6; /* primary */
+        }
+        .nav-item.active i {
+            transform: translateY(-2px);
+        }
+
+        /* 地圖圖釘 */
+        .map-pin {
             position: absolute;
-            top: 100%; /* 圖釘下方 */
+            transform: translate(-50%, -100%);
+            cursor: pointer;
+            transition: transform 0.2s;
+            z-index: 20;
+        }
+        .map-pin:hover {
+            transform: translate(-50%, -100%) scale(1.1);
+            z-index: 30;
+        }
+        /* 任務執行中標籤 */
+        .task-label {
+            display: none;
+            position: absolute;
+            top: 100%;
             left: 50%;
             transform: translateX(-50%);
-            margin-top: 6px; /* 往下推 6px */
-            background-color: #16A34A; /* 綠色 */
+            margin-top: 4px;
+            background-color: #16A34A;
             color: white;
-            padding: 3px 8px;
-            border-radius: 6px;
+            padding: 2px 6px;
+            border-radius: 4px;
             font-size: 10px;
             font-weight: 600;
-            white-space: nowrap; /* 確保 "任務執行中" 不會換行 */
-            z-index: 10; /* 確保在其他東西之上 */
+            white-space: nowrap;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .task-pin:hover {
-            transform: translate(-50%, -50%) scale(1.1);
+        .map-pin.active .pin-body {
+            animation: bounce 1s infinite;
+            background-color: #fcd34d; /* Amber-300 */
+            border-color: #d97706;
         }
-        /* 新增：任務進行中 (閃爍) */
-        .task-pin.active {
-            /* 使用 Tailwind 的 green-600: #16A34A */
-            animation: pulse 1.5s infinite;
-        }
-        /* 新增：Active 時顯示標籤 */
-        .task-pin.active .task-label {
+        .map-pin.active .task-label {
             display: block;
         }
-
-        /* 膠囊式分頁按鈕的轉場效果 */
-        .tab-btn {
-             transition: all 0.3s ease; /* 移除 @apply */
-        }
-
-        .tab-panel {
-            display: none; /* 預設隱藏 */
-        }
-        .tab-panel.active {
-            display: block; /* 顯示選中的分頁 */
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 12px rgba(22, 163, 74, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(22, 163, 74, 0);
-            }
-        }
-        /* 底部彈窗 */
-        .bottom-sheet {
-            animation: slide-up 0.3s ease-out;
-        }
-        @keyframes slide-up {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-        /* 城市花園的花朵 */
-        .flower {
-            opacity: 0;
-            transform: scale(0.5);
-            transition: all 0.5s ease-out;
-        }
-        .flower.visible {
-            opacity: 1;
-            transform: scale(1);
-        }
-        
-        /* 底部導航列樣式 */
-        .bottom-nav {
-            flex-shrink: 0; 
-            height: 65px; 
-            padding-top: 8px;
-            padding-bottom: 8px;
-        }
-        
-        /* 底部導航按鈕 (左右) - 修改為 5 個項目 */
-        .bottom-nav-item {
+        .pin-body {
+            width: 44px;
+            height: 44px;
+            background: white;
+            border: 3px solid #14b8a6;
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 20%; /* 1/5 寬度 */
-            padding-top: 0.25rem; /* pt-1 */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        .pin-icon {
+            transform: rotate(45deg);
+            font-size: 1.2rem;
+            color: #334155;
+        }
+        
+        /* 地圖互動 - 移除 grab cursor */
+        #map-viewport {
+            /* cursor: grab; */ 
+            background-color: #F5F3EF; /* 地圖底色 */
+        }
+        /* #map-viewport.grabbing {
+            cursor: grabbing;
+        } */
+
+        @keyframes bounce {
+            0%, 100% { transform: rotate(-45deg) translateY(0); }
+            50% { transform: rotate(-45deg) translateY(-5px); }
         }
 
+        /* 會呼吸的花 */
+        .living-flower {
+            transform-origin: bottom center;
+            animation: sway 3s ease-in-out infinite;
+            animation-delay: calc(var(--delay) * 1s);
+        }
+        
+        /* 設定列表 */
+        .setting-link {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: white;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .setting-link:hover {
+            background-color: #f8fafc;
+        }
+        .setting-link:last-child {
+            border-bottom: none;
+        }
 
-        /* 花園背景漸變 (天空調亮) */
-        .garden-bg-gradient {
-            background: linear-gradient(to bottom, #ADD8E6, #C1E5F0); /* 淺藍色天空漸變 (更亮) */
+        /* 常見問題折疊面板 */
+        .faq-item {
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .faq-question {
+            width: 100%;
+            text-align: left;
+            padding: 1rem;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+        }
+        .faq-answer {
+            display: none;
+            padding: 0 1rem 1rem 1rem;
+            color: #64748b;
+            font-size: 0.875rem;
+            background: white;
+        }
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+        
+        /* App Logo Avatar */
+        .app-logo-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            color: #14b8a6;
+            font-size: 1.25rem;
+        }
+        .app-logo-avatar-lg {
+            width: 64px;
+            height: 64px;
+            font-size: 2rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- 模擬手機外框 --><div class="mobile-shell">
-        <div class="mobile-content"> 
+<div class="app-container">
 
-            <!-- 
-                ============================================================
-                畫面 1: 啟動畫面 (Splash Screen) & LINE Login
-                ============================================================
-            --><div id="page-splash" class="page active bg-white items-center justify-center text-center p-8 space-y-8">
-                <div class="flex flex-col items-center">
-                    <i class="fa-solid fa-map-location-dot fa-4x text-green-500"></i>
-                    <h1 class="text-3xl font-bold text-gray-800 mt-4">CivicGo</h1>
-                    <p class="text-lg text-gray-600 mt-2">讓改變，從巷口開始</p>
-                </div>
-                
-                <div class="w-full absolute bottom-16 left-0 px-8">
-                    <!-- 修改：登入後前往主頁 -->
-                    <button onclick="goToPage('page-home')" class="w-full bg-[#06C755] text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:bg-[#05b34b] transition-colors flex items-center justify-center space-x-2">
-                        <i class="fa-brands fa-line fa-lg"></i>
-                        <span>使用 LINE 登入</span>
-                    </button>
-                    <p class="text-xs text-gray-500 mt-4 text-center">登入即表示您同意我們的服務條款。</p>
-                </div>
+    <!-- ==================== 1. 啟動頁 (Splash) ==================== -->
+    <div id="page-splash" class="page active bg-gradient-to-br from-teal-500 to-emerald-600 items-center justify-center text-white p-8">
+        <div class="text-center animate-float">
+            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <i class="fa-solid fa-seedling text-5xl text-teal-600"></i>
             </div>
+            <h1 class="text-4xl font-bold mb-2 tracking-wider">CivicGo</h1>
+            <p class="text-teal-100 text-lg font-light">讓改變，從巷口開始</p>
+        </div>
+        
+        <div class="absolute bottom-12 w-full px-8">
+            <button onclick="goToPage('page-home')" class="w-full bg-white text-teal-600 font-bold py-4 rounded-full shadow-lg hover:bg-teal-50 transition-transform active:scale-95 flex items-center justify-center gap-3">
+                <i class="fa-brands fa-line text-2xl"></i>
+                <span>LINE 帳號一鍵登入</span>
+            </button>
+            <p class="text-center text-teal-200/80 text-xs mt-4">登入即代表同意服務條款與隱私權政策</p>
+        </div>
+    </div>
 
-            <!-- 
-                ============================================================
-                畫面 2: 主畫面 (地圖任務)
-                ============================================================
-            --><div id="page-map" class="page">
-                <!-- 模擬 LINE MINI App 頂部 --><div class="mini-app-header w-full p-4 flex items-center justify-between shadow-sm">
-                    <h1 class="text-xl font-bold text-gray-800">CivicGo</h1>
-                    <!-- 右上角按鈕已移除 -->
-                    <span class="w-10 h-10"></span> <!-- 佔位符保持標題置中 -->
-                </div>
-                
-                <!-- 地圖區域 - 使用 SVG 示意圖 --><div class="flex-grow relative w-full overflow-hidden bg-gray-200">
-                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 600">
-                        <!-- 基礎底色 (淺米色) --><rect x="0" y="0" width="400" height="600" fill="#F5F3EF" />
-                        
-                        <!-- 道路 (中灰色) --><rect x="150" y="0" width="60" height="600" fill="#CBD5E1" /> <!-- 垂直主要道路 --><rect x="0" y="250" width="400" height="60" fill="#CBD5E1" /> <!-- 水平主要道路 --><rect x="0" y="450" width="400" height="40" fill="#E2E8F0" /> <!-- 水平小路 --><rect x="300" y="0" width="40" height="250" fill="#E2E8F0" /> <!-- 垂直小路 --><!-- 道路中心線 --><path d="M 170 0 V 600" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="10 10" fill="none"/>
-                        <path d="M 190 0 V 600" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="10 10" fill="none"/>
-                        <path d="M 0 270 H 400" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="10 10" fill="none"/>
-                        <path d="M 0 290 H 400" stroke="#FFFFFF" stroke-width="2" stroke-dasharray="10 10" fill="none"/>
+    <!-- ==================== 2. 主頁 (Home) ==================== -->
+    <div id="page-home" class="page bg-slate-50">
+        <!-- 頂部欄 -->
+        <div class="px-6 pt-12 pb-4 bg-white shadow-sm flex justify-between items-center z-10">
+            <div>
+                <p class="text-gray-500 text-xs mb-1">早安，鄰里英雄</p>
+                <h2 class="text-2xl font-bold text-gray-800">NCUEfreshman</h2>
+            </div>
+            <div class="relative cursor-pointer" onclick="toggleNotificationModal()">
+                <i class="fa-regular fa-bell text-xl text-gray-600"></i>
+                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+            </div>
+        </div>
 
-                        <!-- 綠地 (公園) --><rect x="230" y="330" width="150" height="100" fill="#C6F6D5" /> <!-- 右下公園 --><rect x="20" y="20" width="110" height="210" fill="#D1FAE5" /> <!-- 左上公園 --><!-- 建築物 (深灰 & 不同色調) --><rect x="230" y="20" width="50" height="80" fill="#9CA3AF" />
-                        <rect x="230" y="120" width="50" height="110" fill="#A0AEC0" />
-                        
-                        <rect x="360" y="20" width="20" height="210" fill="#A0AEC0" />
-
-                        <rect x="20" y="330" width="110" height="100" fill="#9CA3AF" />
-                        <rect x="20" y="510" width="110" height="70" fill="#A0AEC0" />
-                        <rect x="230" y="510" width="150" height="70" fill="#9CA3AF" />
-                        
-                        <!-- 公園裡的樹 (圓形) --><circle cx="50" cy="50" r="10" fill="#4ADE80" opacity="0.8"/>
-                        <circle cx="80" cy="80" r="15" fill="#34D399" opacity="0.8"/>
-                        <circle cx="100" cy="150" r="12" fill="#4ADE80" opacity="0.8"/>
-                        <circle cx="40" cy="200" r="10" fill="#34D399" opacity="0.8"/>
-                        <circle cx="250" cy="360" r="10" fill="#4ADE80" opacity="0.8"/>
-                        <circle cx="280" cy="400" r="15" fill="#34D399" opacity="0.8"/>
-                        <circle cx="340" cy="380" r="12" fill="#4ADE80" opacity="0.8"/>
-                    </svg>
-                    
-                    <!-- 使用者當前位置 --><div class="absolute" style="top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                        <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md"></div>
-                        <div class="w-4 h-4 bg-blue-500 rounded-full absolute top-0 left-0 animate-ping"></div>
-                    </div>
-
-                    <!-- 任務圖釘 1: 撿垃圾 --><div id="pin-task1" class="task-pin border-red-500" style="top: 45%; left: 40%;" onclick="showTaskDetail('task1')">
-                        <i class="fa-solid fa-trash-can fa-lg text-red-700"></i>
-                        <span class="task-label">任務執行中</span>
-                    </div>
-
-                    <!-- 任務圖釘 2: 捐二手書 --><div id="pin-task2" class="task-pin border-blue-500" style="top: 60%; left: 65%;" onclick="showTaskDetail('task2')">
-                        <i class="fa-solid fa-book fa-lg text-blue-700"></i>
-                        <span class="task-label">任務執行中</span>
-                    </div>
-
-                    <!-- 任務圖釘 3: 募集冬衣 --><div id="pin-task3" class="task-pin border-yellow-500" style="top: 25%; left: 55%;" onclick="showTaskDetail('task3')">
-                        <i class="fa-solid fa-shirt fa-lg text-yellow-700"></i>
-                        <span class="task-label">任務執行中</span>
-                    </div>
-
-                    <!-- 新增：發布需求 (FAB) --><button onclick="goToPage('page-community-post')" class="absolute bottom-6 right-6 w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center shadow-lg z-20">
-                        <i class="fa-solid fa-plus fa-2x"></i>
+        <div class="flex-grow overflow-y-auto hide-scrollbar p-6 space-y-6">
+            
+            <!-- 1. 心情簽到 -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                <p id="mood-title" class="text-gray-600 font-medium mb-3 text-sm">今天心情如何？簽到領取 5 積分！</p>
+                <div id="mood-buttons" class="flex justify-between">
+                    <button onclick="checkInMood(this)" class="flex flex-col items-center gap-1 transition hover:scale-110 group">
+                        <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-xl group-hover:bg-orange-200">😄</div>
+                        <span class="text-xs text-gray-500">開心</span>
                     </button>
-                </div>
-                
-                <!-- 底部導航 (全新 5 項目結構) --><div class="bottom-nav w-full bg-white flex justify-around items-center border-t border-gray-200 shadow-inner-top">
-                    <!-- 1. 主頁 -->
-                    <button onclick="goToPage('page-home')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text-xs mt-1">主頁</span>
+                    <button onclick="checkInMood(this)" class="flex flex-col items-center gap-1 transition hover:scale-110 group">
+                        <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl group-hover:bg-blue-200">😌</div>
+                        <span class="text-xs text-gray-500">平靜</span>
                     </button>
-                    <!-- 2. 社群 -->
-                    <button onclick="goToPage('page-community-feed')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text-xs mt-1">社群</span>
+                    <button onclick="checkInMood(this)" class="flex flex-col items-center gap-1 transition hover:scale-110 group">
+                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-xl group-hover:bg-gray-200">😐</div>
+                        <span class="text-xs text-gray-500">一般</span>
                     </button>
-                    <!-- 3. 地圖 (當前頁) -->
-                    <button onclick="goToPage('page-map')" class="bottom-nav-item text-green-600">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="text-xs font-semibold mt-1">地圖</span>
+                    <button onclick="checkInMood(this)" class="flex flex-col items-center gap-1 transition hover:scale-110 group">
+                        <div class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-xl group-hover:bg-purple-200">😔</div>
+                        <span class="text-xs text-gray-500">低落</span>
                     </button>
-                    <!-- 4. 獎勵 -->
-                    <button onclick="goToPage('page-rewards')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="text-xs mt-1">獎勵</span>
-                    </button>
-                    <!-- 5. 個人 -->
-                    <button onclick="goToPage('page-garden')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="text-xs mt-1">個人</span>
+                    <button onclick="checkInMood(this)" class="flex flex-col items-center gap-1 transition hover:scale-110 group">
+                        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-xl group-hover:bg-red-200">😫</div>
+                        <span class="text-xs text-gray-500">疲憊</span>
                     </button>
                 </div>
             </div>
 
-            <!-- 
-                ============================================================
-                畫面 3: 任務詳情 (底部彈窗)
-                ============================================================
-            --><div id="modal-task-detail" class="page" style="display: none; background-color: rgba(0,0,0,0.5);" onclick="closeModal('modal-task-detail')">
-                <div class="w-full bg-white rounded-t-2xl p-6 absolute bottom-0 bottom-sheet max-h-[70%] flex flex-col" onclick="event.stopPropagation()">
-                    <div id="task-detail-content" class="overflow-y-auto"></div>
-                    <div class="mt-6 flex space-x-4 flex-shrink-0">
-                        <button onclick="closeModal('modal-task-detail')" class="w-1/3 bg-gray-200 text-gray-700 font-semibold py-3 rounded-lg">再看看</button>
-                        <button id="accept-task-btn" class="w-2/3 bg-green-500 text-white font-semibold py-3 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
-                            接受任務
-                        </button>
+            <!-- 2. 總數據卡 -->
+            <div class="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="absolute top-0 right-0 opacity-10 transform translate-x-4 translate-y-4">
+                    <i class="fa-solid fa-trophy text-9xl"></i>
+                </div>
+                <p class="text-teal-100 text-sm mb-1">您已累計貢獻</p>
+                <div class="flex items-baseline gap-2">
+                    <span id="home-tasks-count" class="text-4xl font-bold">0</span>
+                    <span class="text-lg">項微任務</span>
+                </div>
+                <p class="text-teal-50/80 text-xs mt-2">感謝您為社區的每一次付出！</p>
+            </div>
+
+            <!-- 3. 活動公告 -->
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg mb-3">活動公告</h3>
+                <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+                    <div class="flex items-start gap-3">
+                         <div class="bg-red-100 text-red-600 p-2 rounded-lg flex-shrink-0">
+                             <i class="fa-solid fa-bullhorn text-xl"></i>
+                         </div>
+                         <div>
+                             <h3 class="font-bold text-gray-800 text-lg">週末淨灘英雄召集令！</h3>
+                             <p class="text-sm text-gray-500 mt-2 leading-relaxed">本週末在彰化海濱，需要您的力量一起讓海岸線更美麗。參加者可獲得額外 50 積分與<span class="text-amber-500 font-bold">專屬勳章</span>！</p>
+                             <button class="mt-3 text-teal-600 text-sm font-bold hover:underline">查看詳情 ></button>
+                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 
-                ============================================================
-                畫面 4: 任務驗證 (模擬相機)
-                ============================================================
-            --><div id="page-validation" class="page bg-gray-900 items-center justify-center text-white p-4">
-                
-                <!-- 驗證中讀取畫面 --><div id="ai-verifying" class="absolute inset-0 bg-gray-900/90 backdrop-blur-sm flex-col items-center justify-center" style="display: none; z-index: 20;">
-                    <p class="mt-4 text-gray-200 font-semibold text-lg">📸 正在驗證您的貢獻...</p>
-                </div>
-
-                <!-- 拍照介面 --><div class="w-full text-center absolute top-16">
-                    <h2 class="text-2xl font-semibold">任務驗證</h2>
-                    <p id="validation-instruction" class="text-lg text-gray-300 mt-2">請拍攝您收集的垃圾袋</p>
-                </div>
-                
-                <div class="w-full aspect-square bg-gray-700 rounded-lg flex items-center justify-center text-gray-500">
-                    <i class="fa-solid fa-camera fa-7x"></i>
-                </div>
-
-                <div class="w-full absolute bottom-16 left-0 px-8 flex justify-around items-center">
-                    <button onclick="goToPage('page-map')" class="text-white font-medium">取消</button>
-                    <button onclick="startAIVerification()" class="w-20 h-20 bg-white rounded-full border-4 border-gray-300 shadow-xl"></button>
-                    <button class="text-white font-medium opacity-0">切換</button>
-                </div>
-            </div>
-
-            <!-- 
-                ============================================================
-                畫面 5: 任務成功 - 分享至 VOOM
-                ============================================================
-            --><div id="page-success" class="page bg-white items-center text-center p-8 pt-24 space-y-6">
-                <i class="fa-solid fa-circle-check fa-7x text-green-500"></i>
-                
-                <h1 class="text-3xl font-bold text-gray-800">任務完成！</h1>
-                <p class="text-lg text-gray-600">恭喜！您獲得了 <span id="reward-points" class="font-bold text-green-600"></span> 點積分。</p>
-                <!-- 移除了重疊的圖片，保留文字 --><p class="text-lg font-semibold text-gray-700">您的「城市花園」長出了一朵新的花！</p>
-                
-                <div class="w-full absolute bottom-16 left-0 px-8 space-y-4">
-                    <button onclick="goToPage('page-garden')" class="w-full bg-green-500 text-white font-semibold py-4 px-6 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
-                        查看我的花園
-                    </button>
-                    <button onclick="showSimpleAlert('已分享至 LINE VOOM (模擬)')" class="w-full bg-white text-[#06C755] border-2 border-[#06C755] font-semibold py-3 px-6 rounded-lg flex items-center justify-center space-x-2">
-                        <i class="fa-brands fa-line fa-lg"></i>
-                        <span>分享至 LINE VOOM</span>
-                    </button>
-                    <button onclick="goToPage('page-map')" class="w-full bg-gray-100 text-gray-700 font-semibold py-3 px-6 rounded-lg">
-                        尋找下一個任務
-                    </button>
+            <!-- 4. 永久任務 -->
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg mb-3">永久挑戰</h3>
+                <div class="bg-indigo-50 rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-indigo-500 shadow-sm">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <p class="font-bold text-indigo-900">邀請夥伴加入</p>
+                            <p class="text-xs text-indigo-600">雙方皆可獲得 20 積分</p>
+                        </div>
+                    </div>
+                    <button onclick="copyInviteCode()" class="bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-full font-medium hover:bg-indigo-600 transition">複製代碼</button>
                 </div>
             </div>
             
-            <!-- 
-                ============================================================
-                畫面 6: 個人中心 (page-garden) - 根據截圖大改版
-                ============================================================
-            --><div id="page-garden" class="page bg-gray-50">
-                <!-- 頂部導航 --><div class="mini-app-header w-full p-4 flex items-center shadow-sm">
-                    <!-- 移除返回按鈕 -->
-                    <h1 class="text-xl font-bold text-gray-800 text-center flex-grow">個人中心</h1>
-                </div>
-
-                <!-- 可捲動的 wrapper --><div class="flex-grow overflow-y-auto p-6 space-y-6"> <!-- 移除 pb-16 -->
-
-                    <!-- 新：個人資料卡 (含 XP) --><div class="bg-white rounded-lg shadow-lg p-5">
-                        <div class="flex items-center space-x-4">
-                            <img src="https://placehold.co/64x64/c6f6d5/2f855a?text=You" alt="Your Avatar" class="w-16 h-16 rounded-full border-2 border-green-200">
-                            <div>
-                                <h2 class="text-2xl font-bold text-gray-800">NCUEfreshman</h2>
-                                <p class="font-semibold text-green-600">LV 1 新手公民</p>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="flex justify-between text-sm font-medium text-gray-600 mb-1">
-                                <span>XP</span>
-                                <span>10 / 50</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-green-500 h-2.5 rounded-full" style="width: 20%"></div> <!-- 模擬 20% XP -->
-                            </div>
-                        </div>
+            <!-- 5. 最新通知 (與鈴鐺連動) -->
+            <div class="pb-20" id="home-notifications">
+                <h3 class="font-bold text-gray-800 text-lg mb-3">最新通知</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 divide-y divide-slate-50">
+                    <div class="p-4 flex items-center gap-3">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <p class="text-sm text-gray-600 flex-grow">您的任務「隨手撿垃圾」已通過驗證！</p>
+                        <span class="text-xs text-gray-400">1小時前</span>
                     </div>
-
-                    <!-- 新：四格統計版 --><div class="bg-white rounded-lg shadow-lg p-4">
-                        <div class="grid grid-cols-2 gap-4 text-center">
-                            <!-- 總積分 -->
-                            <div class="p-2">
-                                <p class="text-sm text-gray-500">總積分</p>
-                                <p id="garden-total-points" class="text-3xl font-bold text-green-600">0</p>
-                            </div>
-                            <!-- 已完成任務 -->
-                            <div class="p-2">
-                                <p class="text-sm text-gray-500">已完成任務</p>
-                                <p id="garden-tasks-completed" class="text-3xl font-bold text-gray-800">0</p>
-                            </div>
-                            <!-- 信用積分 -->
-                            <div class="p-2">
-                                <p class="text-sm text-gray-500">信用積分</p>
-                                <p id="garden-trust-score" class="text-3xl font-bold text-blue-600">100</p>
-                            </div>
-                            <!-- 已邀請 -->
-                            <div class="p-2">
-                                <p class="text-sm text-gray-500">已邀請</p>
-                                <p class="text-3xl font-bold text-gray-800">0</p>
-                            </div>
-                        </div>
+                    <div class="p-4 flex items-center gap-3">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <p class="text-sm text-gray-600 flex-grow">「募集二手冬衣」任務已更新地點。</p>
+                        <span class="text-xs text-gray-400">昨天</span>
                     </div>
-                    
-                    <!-- 保留：花園視覺化 --><div class="p-6 pt-0 flex flex-col items-center justify-center bg-green-50 rounded-2xl m-0 shadow-inner">
-                        <p class="w-full text-center text-lg font-semibold text-gray-700 mb-4 mt-6">NCUEfreshman的花園</p>
-                        <div class="w-full h-64 rounded-lg flex items-end justify-center space-x-4 overflow-hidden relative p-4 garden-bg-gradient">
-                            
-                            <svg class="absolute bottom-0 left-0 w-full h-32 z-20" viewBox="0 0 400 128" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <!-- 淺色草地 (前景) --><rect x="0" y="48" width="400" height="80" fill="#22C55E"/>
-                                <!-- 深色草地 (背景) 稍高一點 --><rect x="0" y="0" width="400" height="80" fill="#15803D" opacity="0.8"/>
-                            </svg>
-
-                            <div id="flower-container" class="relative z-30 flex items-end h-full w-full justify-around"> 
-                                <!-- 花朵會被 JS 加到這裡 --></div>
-                        </div>
-                    </div>
-
-                    <!-- 新增：我的戰績 (仿截圖) --><div class="bg-white rounded-lg shadow-lg p-5">
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">我的戰績</h3>
-                        <div class="space-y-4">
-                            <!-- 本月戰績 -->
-                            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-semibold text-red-600 bg-red-100 px-3 py-1 rounded-full">本月</span>
-                                <p class="text-gray-700">已完成 <span class="font-bold text-lg text-gray-900">0</span> 項任務</p>
-                            </div>
-                            <!-- 本年戰績 -->
-                            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                                <span class="text-sm font-semibold text-blue-600 bg-blue-100 px-3 py-1 rounded-full">本年</span>
-                                <p class="text-gray-700">已完成 <span class="font-bold text-lg text-gray-900">0</span> 項任務</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 新增：邀請夥伴 (仿截圖) --><div class="bg-white rounded-lg shadow-lg p-5">
-                        <div class="flex justify-between items-center mb-3">
-                            <h3 class="text-lg font-semibold text-gray-800">邀請夥伴</h3>
-                            <img src="https://placehold.co/80x40/f0f9ff/0284c7?text=Invite" alt="邀請示意圖" class="rounded">
-                        </div>
-                        <p class="text-sm text-gray-600 mb-3">邀請好友加入，你們都能獲得積分獎勵！</p>
-                        <div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg">
-                            <span class="text-gray-700 font-medium">我的邀請碼: <span class="font-bold text-lg text-black tracking-wider ml-2">B9F53A</span></span>
-                            <button onclick="showSimpleAlert('已複製邀請碼 B9F53A')" class="p-2 text-gray-600 hover:text-green-600">
-                                <i class="fa-solid fa-copy fa-lg"></i>
-                            </button>
-                        </div>
-                    </div>
-                
-                </div> <!-- 結束可捲動的 wrapper -->
-                
-                <!-- 底部導航 (全新 5 項目結構) --><div class="bottom-nav w-full bg-white flex justify-around items-center border-t border-gray-200 shadow-inner-top"> <!-- 移除 fixed 和 style -->
-                    <!-- 1. 主頁 -->
-                    <button onclick="goToPage('page-home')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text-xs mt-1">主頁</span>
-                    </button>
-                    <!-- 2. 社群 -->
-                    <button onclick="goToPage('page-community-feed')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text-xs mt-1">社群</span>
-                    </button>
-                    <!-- 3. 地圖 -->
-                    <button onclick="goToPage('page-map')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="text-xs mt-1">地圖</span>
-                    </button>
-                    <!-- 4. 獎勵 -->
-                    <button onclick="goToPage('page-rewards')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="text-xs mt-1">獎勵</span>
-                    </button>
-                    <!-- 5. 個人 (當前頁) -->
-                    <button onclick="goToPage('page-garden')" class="bottom-nav-item text-green-600">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="text-xs font-semibold mt-1">個人</span>
-                    </button>
                 </div>
             </div>
+        </div>
+        <div class="bottom-nav-placeholder h-[65px]"></div> 
+    </div>
 
-            <!-- 
-                ============================================================
-                畫面 7: 社區端 (發布需求) - 改為子頁面
-                ============================================================
-            --><div id="page-community-post" class="page"> 
-                
-                <div class="mini-app-header w-full p-4 flex items-center shadow-sm">
-                    <!-- 新增：返回按鈕 -->
-                    <button onclick="goToPage('page-map')" class="p-2 text-gray-600">
-                        <i class="fa-solid fa-chevron-left fa-lg"></i>
-                    </button>
-                    <h1 class="text-xl font-bold text-gray-800 text-center flex-grow">發布社區需求</h1>
-                    <span class="w-10 h-10"></span> <!-- 佔位符保持標題置中 -->
+    <!-- ==================== 3. 社群 (Community) ==================== -->
+    <div id="page-community" class="page bg-slate-50">
+        <div class="pt-12 pb-2 px-4 bg-white shadow-sm z-10">
+            <h1 class="text-xl font-bold text-center mb-4 text-gray-800">社群動態</h1>
+            <!-- 膠囊式分頁 -->
+            <div class="bg-slate-100 p-1 rounded-full flex">
+                <button onclick="switchTab('feed')" id="btn-feed" class="flex-1 py-2 rounded-full text-sm font-bold shadow-sm bg-white text-teal-600 transition-all">動態牆</button>
+                <button onclick="switchTab('rank')" id="btn-rank" class="flex-1 py-2 rounded-full text-sm font-bold text-slate-500 transition-all">排行榜</button>
+            </div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto hide-scrollbar pb-20">
+            <!-- 動態牆 Tab -->
+            <div id="tab-feed" class="p-4 space-y-4">
+                <!-- 發文區 -->
+                <div class="bg-white p-4 rounded-2xl shadow-sm">
+                    <div class="flex gap-3">
+                        <!-- 修正頭像 -->
+                        <div class="app-logo-avatar flex-shrink-0"><i class="fa-solid fa-seedling"></i></div>
+                        <textarea id="post-input" class="w-full bg-slate-50 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 resize-none" rows="2" placeholder="分享今天的善行..."></textarea>
+                    </div>
+                    <div class="flex justify-end mt-2">
+                        <button onclick="addPost()" class="bg-teal-500 text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-teal-600 transition">發佈</button>
+                    </div>
                 </div>
 
-                <div class="flex-grow overflow-y-auto p-6"> 
-
-                    <!-- 步驟 2 改為預設顯示 --><div id="manual-form-step">
-                        <form onsubmit="event.preventDefault(); showCommunitySuccess();">
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="task-title" class="text-sm font-medium text-gray-700">任務標題</label>
-                                        <input type="text" id="task-title" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：✨ 週末淨灘神隊友募集！">
-                                    </div>
-                                    <div>
-                                        <label for="task-description" class="text-sm font-medium text-gray-700">任務描述</label>
-                                        <textarea id="task-description" rows="4" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：我們需要 5 位夥伴，協助清理海灘..."></textarea>
-                                    </div>
-                                    <div class="flex space-x-4">
-                                        <div class="w-1/2">
-                                            <label for="task-location" class="text-sm font-medium text-gray-700">任務地點</label>
-                                            <input type="text" id="task-location" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：進德路安全島">
-                                        </div>
-                                        <div class="w-1/2">
-                                            <label for="task-time" class="text-sm font-medium text-gray-700">日期時間</label>
-                                            <input type="text" id="task-time" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：11/20 下午2點">
-                                        </div>
-                                    </div>
-                                    <div class="flex space-x-4">
-                                        <div class="w-1/2">
-                                            <label for="task-people" class="text-sm font-medium text-gray-700">需求人數</label>
-                                            <input type="number" id="task-people" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：5">
-                                        </div>
-                                        <div class="w-1/2">
-                                            <label for="task-reward" class="text-sm font-medium text-gray-700">獎勵積分</gabel>
-                                            <input type="number" id="task-reward" class="w-full mt-1 p-2 border border-gray-300 rounded-lg" placeholder="例如：50">
-                                        </div>
-                                    </div>
-                                    
-                                    <button type="submit" class="w-full bg-green-500 text-white font-semibold py-3 rounded-lg shadow-lg hover:bg-green-600 transition-colors">
-                                        確認發布
-                                    </button>
+                <!-- 動態列表容器 -->
+                <div id="feed-list" class="space-y-4">
+                    <!-- 範例貼文 1 (純文字) -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="https://placehold.co/40x40/f472b6/ffffff?text=C" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">CivicLover123</p>
+                                    <p class="text-xs text-gray-400">2 小時前</p>
                                 </div>
-                            </form>
+                            </div>
+                            <span class="bg-blue-50 text-blue-600 text-[10px] px-2 py-1 rounded-full">#環境維護</span>
                         </div>
-                </div> 
-                
-                <!-- 移除了此頁的底部導航 -->
-
+                        <p class="text-gray-700 text-sm mb-3">今天去進德路幫忙撿垃圾了！雖然很熱，但看到街道變乾淨就好開心！🥳 大家週末有空也可以一起來喔～</p>
+                        <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
+                            <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>12</span></button>
+                            <button onclick="openComments('post1')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>3</span></button>
+                        </div>
+                    </div>
+                    <!-- 範例貼文 2 (純文字) -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="https://placehold.co/40x40/dbeafe/1e40af?text=G" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">GreenGuardian8</p>
+                                    <p class="text-xs text-gray-400">5 小時前</p>
+                                </div>
+                            </div>
+                            <span class="bg-green-50 text-green-600 text-[10px] px-2 py-1 rounded-full">#資源分享</span>
+                        </div>
+                        <p class="text-gray-700 text-sm mb-3">把家裡用不到的二手書捐給圖書館了，希望能幫到需要的人～ 📚 整理的過程也順便斷捨離，心情真好！</p>
+                        <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
+                            <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>8</span></button>
+                            <button onclick="openComments('post2')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>1</span></button>
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- 排行榜 Tab -->
+            <div id="tab-rank" class="hidden p-4 space-y-3">
+                <!-- 自己 -->
+                <div class="bg-teal-50 border border-teal-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <span class="font-bold text-teal-600 text-lg">5</span>
+                    <!-- 修正頭像 -->
+                    <div class="app-logo-avatar w-12 h-12 flex-shrink-0 border-2 border-white"><i class="fa-solid fa-seedling"></i></div>
+                    <div class="flex-grow">
+                        <p class="font-bold text-gray-800">NCUEfreshman</p>
+                        <p class="text-xs text-gray-500">已完成 <span id="rank-task-count">0</span> 件任務</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-bold text-teal-600 text-xl" id="rank-score">0</p>
+                        <p class="text-[10px] text-gray-400">積分</p>
+                    </div>
+                </div>
+                <!-- 第一名 -->
+                <div class="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <span class="font-bold text-amber-500 text-lg w-4 text-center">1</span>
+                    <img src="https://placehold.co/48x48/f59e0b/ffffff?text=U" class="w-12 h-12 rounded-full">
+                    <div class="flex-grow">
+                        <p class="font-bold text-gray-800">UrbanExplorer22</p>
+                        <p class="text-xs text-gray-500">已完成 15 件任務</p>
+                    </div>
+                    <p class="font-bold text-gray-600 text-xl">510</p>
+                </div>
+                 <!-- 第二名 -->
+                 <div class="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm">
+                    <span class="font-bold text-gray-400 text-lg w-4 text-center">2</span>
+                    <img src="https://placehold.co/48x48/dbeafe/1e40af?text=G" class="w-12 h-12 rounded-full">
+                    <div class="flex-grow">
+                        <p class="font-bold text-gray-800">GreenGuardian8</p>
+                        <p class="text-xs text-gray-500">已完成 13 件任務</p>
+                    </div>
+                    <p class="font-bold text-gray-600 text-xl">420</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 4. 地圖 (Map) - 固定版 ==================== -->
+    <div id="page-map" class="page">
+        <div id="map-viewport" class="flex-grow relative w-full h-full overflow-hidden">
+            <div id="map-container" class="w-full h-full relative origin-top-left">
+                 <!-- 模擬地圖 SVG 背景 -->
+                 <svg width="100%" height="100%" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" class="absolute top-0 left-0 opacity-60">
+                    <rect width="400" height="800" fill="#eef2f6"/>
+                    <!-- 道路 -->
+                    <path d="M200,0 L200,800 M0,400 L400,400 M100,0 L100,400 M300,400 L300,800" stroke="#cbd5e1" stroke-width="20"/>
+                    <path d="M200,0 L200,800 M0,400 L400,400" stroke="white" stroke-width="2" stroke-dasharray="5,5"/>
+                    <!-- 綠地 -->
+                    <rect x="50" y="50" width="100" height="150" fill="#d1fae5" rx="10"/>
+                    <rect x="250" y="500" width="120" height="120" fill="#d1fae5" rx="10"/>
+                    <!-- 建築 -->
+                    <rect x="260" y="60" width="80" height="80" fill="#94a3b8"/>
+                    <rect x="40" y="450" width="60" height="100" fill="#cbd5e1"/>
+                </svg>
+    
+                <!-- 使用者位置 -->
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10">
+                    <div class="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg relative z-10"></div>
+                    <div class="w-12 h-12 bg-blue-500/30 rounded-full absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-ping"></div>
+                </div>
+    
+                <!-- 任務圖釘 -->
+                <div id="pin-task1" class="map-pin" style="top: 40%; left: 35%;" onclick="openTaskModal('task1')">
+                    <div class="pin-body"><i class="pin-icon fa-solid fa-trash-can text-red-500"></i></div>
+                    <span class="task-label">任務執行中</span>
+                </div>
+                <div id="pin-task2" class="map-pin" style="top: 60%; left: 70%;" onclick="openTaskModal('task2')">
+                    <div class="pin-body"><i class="pin-icon fa-solid fa-book text-blue-500"></i></div>
+                    <span class="task-label">任務執行中</span>
+                </div>
+                <!-- 修正：移動被搜尋欄擋住的圖釘 -->
+                <div id="pin-task3" class="map-pin" style="top: 30%; left: 60%;" onclick="openTaskModal('task3')">
+                    <div class="pin-body"><i class="pin-icon fa-solid fa-shirt text-yellow-500"></i></div>
+                    <span class="task-label">任務執行中</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 懸浮搜尋欄 (加篩選按鈕事件) -->
+        <div class="absolute top-12 left-4 right-4 bg-white rounded-full shadow-md p-3 flex items-center gap-3 z-20">
+            <i class="fa-solid fa-magnifying-glass text-gray-400 ml-2"></i>
+            <input type="text" placeholder="搜尋附近任務..." class="flex-grow bg-transparent outline-none text-sm">
+            <button onclick="openFilterModal()" class="bg-slate-100 p-2 rounded-full hover:bg-slate-200 transition"><i class="fa-solid fa-sliders text-gray-600"></i></button>
+        </div>
+
+        <!-- 發布按鈕 FAB -->
+        <button onclick="goToPage('page-post')" class="absolute bottom-24 right-4 w-14 h-14 bg-teal-500 text-white rounded-full shadow-lg flex items-center justify-center z-20 hover:bg-teal-600 transition hover:scale-105 active:scale-95">
+            <i class="fa-solid fa-plus text-xl"></i>
+        </button>
+
+        <div class="bottom-nav-placeholder h-[65px]"></div>
+    </div>
+
+    <!-- ==================== 5. 獎勵 (Rewards) ==================== -->
+    <div id="page-rewards" class="page bg-slate-50">
+        <div class="pt-12 pb-6 px-6 bg-gradient-to-b from-teal-500 to-teal-600 text-white rounded-b-[2rem] shadow-md z-10">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-teal-100 text-sm">可用積分</p>
+                    <h1 class="text-4xl font-bold mt-1" id="reward-points-display">0</h1>
+                </div>
+                <div onclick="goToPage('sub-history')" class="bg-white/20 px-3 py-1 rounded-full text-xs backdrop-blur-sm cursor-pointer hover:bg-white/30 transition">
+                    兌換紀錄 >
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto hide-scrollbar p-6 space-y-6 pb-24">
+            <!-- 善的循環 -->
+            <div>
+                <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-hand-holding-heart text-red-400"></i> 愛心捐贈
+                </h3>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-red-50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                         <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center text-red-500">
+                            <i class="fa-solid fa-gift"></i>
+                         </div>
+                         <div>
+                             <p class="font-bold text-gray-800">捐贈積分給社福團體</p> <!-- 修正文字 -->
+                             <p class="text-xs text-gray-500">讓善意延續</p>
+                         </div>
+                    </div>
+                    <button onclick="openDonateModal()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-red-600 active:scale-95 transition">捐贈</button>
+                </div>
+            </div>
+
+            <!-- 實質獎勵 -->
+            <div>
+                <h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-store text-teal-500"></i> 積分兌換
+                </h3>
+                <div class="space-y-3">
+                    <!-- Item 1: LINE POINTS -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                             <div class="w-12 h-12 bg-green-50 rounded-xl flex items-center justify-center text-green-500">
+                                <i class="fa-brands fa-line text-2xl"></i>
+                             </div>
+                             <div>
+                                 <p class="font-bold text-gray-800 text-sm">50 點 LINE POINTS</p>
+                                 <p class="text-xs text-teal-600 font-medium">500 積分</p>
+                             </div>
+                        </div>
+                        <button onclick="redeemItem(500, 'LINE POINTS')" class="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-100 transition">兌換</button>
+                    </div>
+                    <!-- Item 2: 咖啡券 -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                             <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+                                <i class="fa-solid fa-mug-hot"></i>
+                             </div>
+                             <div>
+                                 <p class="font-bold text-gray-800 text-sm">在地咖啡 50元折價券</p>
+                                 <p class="text-xs text-teal-600 font-medium">300 積分</p>
+                             </div>
+                        </div>
+                        <button onclick="redeemItem(300, '咖啡券')" class="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-100 transition">兌換</button>
+                    </div>
+                    <!-- Item 3: NPO 帆布袋 -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                             <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-500">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                             </div>
+                             <div>
+                                 <p class="font-bold text-gray-800 text-sm">NPO 紀念帆布袋</p>
+                                 <p class="text-xs text-teal-600 font-medium">400 積分</p>
+                             </div>
+                        </div>
+                        <button onclick="redeemItem(400, '帆布袋')" class="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-100 transition">兌換</button>
+                    </div>
+                    <!-- Item 4: 手工皂 -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                             <div class="w-12 h-12 bg-purple-50 rounded-xl flex items-center justify-center text-purple-500">
+                                <i class="fa-solid fa-soap"></i>
+                             </div>
+                             <div>
+                                 <p class="font-bold text-gray-800 text-sm">小作所手工皂</p>
+                                 <p class="text-xs text-teal-600 font-medium">250 積分</p>
+                             </div>
+                        </div>
+                        <button onclick="redeemItem(250, '手工皂')" class="bg-teal-50 text-teal-600 px-4 py-2 rounded-lg text-sm font-bold hover:bg-teal-100 transition">兌換</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 6. 個人 (Garden) - 重構版 ==================== -->
+    <div id="page-garden" class="page bg-slate-50">
+        <!-- 頂部個人資料 -->
+        <div class="pt-12 px-6 pb-6 bg-white shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <!-- 修正頭像 -->
+                    <div class="app-logo-avatar app-logo-avatar-lg border-4 border-teal-50"><i class="fa-solid fa-seedling"></i></div>
+                    <div class="absolute bottom-0 right-0 w-5 h-5 bg-amber-400 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">1</div>
+                </div>
+                <div class="flex-grow">
+                    <h2 class="text-xl font-bold text-gray-800">Hi, NCUEfreshman</h2>
+                    <p class="text-xs text-gray-500">LV 1 新手公民</p>
+                    <!-- XP Bar -->
+                    <div class="w-full h-2 bg-gray-100 rounded-full mt-2 overflow-hidden">
+                        <div class="h-full bg-teal-400 rounded-full" style="width: 20%"></div>
+                    </div>
+                    <p class="text-[10px] text-right text-gray-400 mt-0.5">XP 10/50</p>
+                </div>
+            </div>
+            <!-- 四格數據 (CivicGo 指標) -->
+            <div class="grid grid-cols-4 gap-2 mt-6 text-center">
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">總積分</p>
+                    <p id="profile-total-points" class="font-bold text-gray-800 text-lg">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">完成任務</p>
+                    <p id="profile-tasks-completed" class="font-bold text-gray-800 text-lg">0</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">信用分</p>
+                    <p class="font-bold text-teal-600 text-lg">100</p>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-400 mb-1">邀請</p>
+                    <p class="font-bold text-gray-800 text-lg">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex-grow overflow-y-auto hide-scrollbar p-6 space-y-6 pb-24">
             
-            <!-- 
-                ============================================================
-                畫面 8: 社區貢獻排行榜 (此頁面已合併到 "社群")
-                ============================================================
-            -->
-            <!-- 舊的 page-ranking 整個 div 已被移除 -->
-
-            <!-- 
-                ============================================================
-                新增畫面 8: 社群 (動態 + 排行榜)
-                ============================================================
-            --><div id="page-community-feed" class="page bg-gray-50">
-                <!-- 【修改】頂部導航 (標題 + 膠囊按鈕) --><div class="mini-app-header w-full p-4 flex flex-col shadow-sm">
-                    <h1 class="text-xl font-bold text-gray-800 text-center w-full">社群</h1>
-                    <!-- 新：膠囊式分頁切換 -->
-                    <div class="w-full max-w-sm mx-auto bg-gray-100 p-1.5 rounded-full flex justify-center mt-4">
-                        <button id="tab-btn-feed" class="tab-btn w-1/2 py-2 rounded-full text-center font-semibold bg-white text-green-600 shadow-md" onclick="showTab('feed')">
-                            <i class="fa-solid fa-images mr-1"></i> 動態
-                        </button>
-                        <button id="tab-btn-ranking" class="tab-btn w-1/2 py-2 rounded-full text-center font-semibold text-gray-600" onclick="showTab('ranking')">
-                            <i class="fa-solid fa-chart-simple mr-1"></i> 排行榜
-                        </button>
-                    </div>
+            <!-- 新增：榮耀勳章 (Badge Wall) -->
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-gray-800">榮耀勳章</h3>
+                    <span class="text-xs text-gray-400">已收集 0/5</span>
                 </div>
-
-                <!-- 可捲動內容區 -->
-                <div class="flex-grow overflow-y-auto"> <!-- 移除 pb-16 -->
-                    <!-- 分頁 1: 動態 (新功能) -->
-                    <div id="tab-panel-feed" class="tab-panel active p-4 space-y-4">
-                        <!-- 範例貼文 1 -->
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <img src="https://placehold.co/40x40/fecdd3/881337?text=C" alt="Avatar" class="w-10 h-10 rounded-full">
-                                <div>
-                                    <p class="font-semibold text-gray-800">CivicLover123</p>
-                                    <p class="text-xs text-gray-500">2 小時前</p>
-                                </div>
-                            </div>
-                            <p class="text-gray-700 mb-3">今天去進德路幫忙撿垃圾了！雖然很熱，但看到街道變乾淨就好開心！🥳 #CivicGo #社區服務</p>
-                            <img src="https://placehold.co/400x250/c6f6d5/2f855a?text=Cleaned+Street" alt="貼文圖片" class="w-full rounded-lg object-cover">
-                        </div>
-                        <!-- 範例貼文 2 -->
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <img src="https://placehold.co/40x40/dbeafe/1e40af?text=G" alt="Avatar" class="w-10 h-10 rounded-full">
-                                <div>
-                                    <p class="font-semibold text-gray-800">GreenGuardian8</p>
-                                    <p class="text-xs text-gray-500">5 小時前</p>
-                                </div>
-                            </div>
-                            <p class="text-gray-700">把家裡用不到的二手書捐給圖書館了，希望能幫到需要的人～</p>
-                        </div>
-                         <!-- 範例貼文 3 -->
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <div class="flex items-center space-x-3 mb-3">
-                                <img src="https://placehold.co/50x50/e0e7ff/4338ca?text=U" alt="Avatar" class="w-10 h-10 rounded-full">
-                                <div>
-                                    <p class="font-semibold text-gray-800">UrbanExplorer22</p>
-                                    <p class="text-xs text-gray-500">1 天前</p>
-                                </div>
-                            </div>
-                            <p class="text-gray-700 mb-3">募集的冬衣送達 NPO 囉！感謝大家的愛心 ❤️</p>
-                            <img src="https://placehold.co/400x250/e0e7ff/4338ca?text=Donation+Box" alt="貼文圖片" class="w-full rounded-lg object-cover">
-                        </div>
-                    </div>
-
-                    <!-- 分頁 2: 排行榜 (從舊頁面移入) -->
-                    <div id="tab-panel-ranking" class="tab-panel p-4 space-y-4"> <!-- 【修改】p-6 改為 p-4 -->
-                        <!-- 排名 1 --><div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-gray-700">1</span>
-                            <img src="https://placehold.co/50x50/e0e7ff/4338ca?text=U" alt="Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">UrbanExplorer22</p>
-                                <p class="text-sm text-gray-500">已完成 15 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-gray-800">510</p>
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-                        
-                        <!-- 排名 2 --><div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-gray-700">2</span>
-                            <img src="https://placehold.co/50x50/dbeafe/1e40af?text=G" alt="Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">GreenGuardian8</p>
-                                <p class="text-sm text-gray-500">已完成 13 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-gray-800">420</p>
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-
-                        <!-- 排名 3 --><div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-gray-700">3</span>
-                            <img src="https://placehold.co/50x50/fef3c7/b45309?text=C" alt="Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">ChanghuaHero99</p>
-                                <p class="text-sm text-gray-500">已完成 12 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-gray-800">350</p>
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-
-                        <!-- 排名 4 --><div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-gray-700">4</span>
-                            <img src="https://placehold.co/50x50/fecdd3/881337?text=C" alt="Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">CivicLover123</p>
-                                <p class="text-sm text-gray-500">已完成 8 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-gray-800">210</p>
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-
-                        <!-- 這是您 --><div class="bg-white border-2 border-green-500 rounded-lg shadow-lg p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-green-600">5</span>
-                            <img src="https://placehold.co/50x50/c6f6d5/2f855a?text=You" alt="Your Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">NCUEfreshman (您)</p>
-                                <p class="text-sm text-gray-500">已完成 1 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-green-600" id="ranking-your-points-clone">10</p> <!-- 複製 ID -->
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-                        
-                        <!-- 排名 6 --><div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <span class="text-2xl font-bold text-gray-700">6</span>
-                            <img src="https://placehold.co/50x50/e5e7eb/4b5563?text=E" alt="Avatar" class="w-12 h-12 rounded-full">
-                            <div class="flex-grow">
-                                <p class="font-bold text-gray-800">EcoWalker77</p>
-                                <p class="text-sm text-gray-500">已完成 1 件任務</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xl font-bold text-gray-800">5</p>
-                                <p class="text-xs text-gray-500">積分</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 底部導航 (全新 5 項目結構) --><div class="bottom-nav w-full bg-white flex justify-around items-center border-t border-gray-200 shadow-inner-top"> <!-- 移除 fixed 和 style -->
-                    <!-- 1. 主頁 -->
-                    <button onclick="goToPage('page-home')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text-xs mt-1">主頁</span>
-                    </button>
-                    <!-- 2. 社群 (當前頁) -->
-                    <button onclick="goToPage('page-community-feed')" class="bottom-nav-item text-green-600">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text-xs font-semibold mt-1">社群</span>
-                    </button>
-                    <!-- 3. 地圖 -->
-                    <button onclick="goToPage('page-map')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="text-xs mt-1">地圖</span>
-                    </button>
-                    <!-- 4. 獎勵 -->
-                    <button onclick="goToPage('page-rewards')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="text-xs mt-1">獎勵</span>
-                    </button>
-                    <!-- 5. 個人 -->
-                    <button onclick="goToPage('page-garden')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="text-xs mt-1">個人</span>
-                    </button>
+                <div class="flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
+                     <!-- 範例勳章 (鎖定狀態) -->
+                     <div class="flex flex-col items-center gap-1 opacity-50 grayscale">
+                         <div class="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center text-2xl">🏆</div>
+                         <span class="text-[10px] text-gray-500 whitespace-nowrap">淨灘英雄</span>
+                     </div>
+                     <div class="flex flex-col items-center gap-1 opacity-50 grayscale">
+                         <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">📚</div>
+                         <span class="text-[10px] text-gray-500 whitespace-nowrap">知識傳遞</span>
+                     </div>
+                     <div class="flex flex-col items-center gap-1 opacity-50 grayscale">
+                         <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-2xl">🤝</div>
+                         <span class="text-[10px] text-gray-500 whitespace-nowrap">熱心助人</span>
+                     </div>
+                     <div class="flex flex-col items-center gap-1 opacity-50 grayscale">
+                         <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-2xl">🌱</div>
+                         <span class="text-[10px] text-gray-500 whitespace-nowrap">環保先鋒</span>
+                     </div>
+                     <div class="flex flex-col items-center gap-1 opacity-50 grayscale">
+                         <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-2xl">👑</div>
+                         <span class="text-[10px] text-gray-500 whitespace-nowrap">社區之星</span>
+                     </div>
                 </div>
             </div>
             
-            <!-- 
-                ============================================================
-                畫面 9: (隱藏) 社區發布成功
-                ============================================================
-            --><div id="modal-community-success" class="page" style="display: none; background-color: rgba(0,0,0,0.5);" onclick="closeModal('modal-community-success'); goToPage('page-map');">
-                <div class="m-auto bg-white rounded-lg shadow-lg p-8 w-11/12 text-center" onclick="event.stopPropagation()">
-                    <i class="fa-solid fa-circle-check fa-5x text-green-500 mx-auto"></i>
-                    <h2 class="text-2xl font-bold text-gray-800 mt-4">發布成功！</h2>
-                    <p class="text-gray-600 mt-2">「週末淨灘活動」已發送給附近的鄰里英雄。</p>
-                    <button onclick="closeModal('modal-community-success'); goToPage('page-map');" class="mt-6 w-full bg-green-500 text-white font-semibold py-3 rounded-lg">
-                        太好了
-                    </button>
+            <!-- 核心：城市花園 (互動版) -->
+            <div class="bg-gradient-to-b from-sky-200 to-sky-100 rounded-3xl p-6 shadow-inner relative overflow-hidden min-h-[200px] flex flex-col justify-end">
+                <h3 class="absolute top-4 left-0 w-full text-center text-sky-700/50 font-bold text-sm tracking-widest uppercase">My City Garden</h3>
+                <!-- 雲朵裝飾 -->
+                <i class="fa-solid fa-cloud text-white/60 text-4xl absolute top-6 left-6 animate-pulse-slow"></i>
+                <i class="fa-solid fa-cloud text-white/40 text-3xl absolute top-10 right-10 animate-pulse-slow" style="animation-delay: 1s"></i>
+
+                <!-- 草地 -->
+                <div class="absolute bottom-0 left-0 w-full h-12 bg-emerald-400"></div>
+                <div class="absolute bottom-0 left-0 w-full h-16 bg-emerald-500/50 rounded-t-[50%] transform scale-x-150 translate-y-8"></div>
+
+                <!-- 花朵容器 -->
+                <div id="garden-container" class="relative z-10 flex justify-around items-end h-32 px-4 pb-4">
+                    <!-- 花朵會動態生成在這裡 -->
+                    <div class="text-center text-sky-700/40 text-xs w-full absolute bottom-16">尚未種植花朵，快去解任務吧！</div>
                 </div>
             </div>
 
-            <!-- 
-                ============================================================
-                新增畫面 (Home): 主頁
-                ============================================================
-            --><div id="page-home" class="page bg-gray-50">
-                <!-- 頂部導航 --><div class="mini-app-header w-full p-4 flex items-center justify-between shadow-sm">
-                    <h1 class="text-xl font-bold text-gray-800">主頁</h1>
-                    <button class="w-10 h-10 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center">
-                        <i class="fa-solid fa-bell"></i>
-                    </button>
+            <!-- 連結列表 -->
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-100">
+                 <button onclick="goToPage('sub-collection')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center"><i class="fa-solid fa-book-open"></i></div>
+                        <span>花朵圖鑑</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+                 <button onclick="goToPage('sub-impact')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center"><i class="fa-solid fa-chart-pie"></i></div>
+                        <span>我的影響力</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+                 <button onclick="goToPage('sub-partners')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center"><i class="fa-solid fa-handshake"></i></div>
+                        <span>合作 NPO 與社區</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+                 <button onclick="goToPage('sub-csr')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center"><i class="fa-solid fa-building"></i></div>
+                        <span>參與企業社會責任</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+                 <button onclick="goToPage('sub-contact')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-green-100 text-green-600 flex items-center justify-center"><i class="fa-solid fa-envelope"></i></div>
+                        <span>聯絡我們</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+                 <button onclick="goToPage('sub-about')" class="setting-link w-full group">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 text-gray-600 flex items-center justify-center"><i class="fa-solid fa-circle-info"></i></div>
+                        <span>關於 CivicGo</span>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs group-hover:text-gray-500"></i>
+                 </button>
+            </div>
+             <div class="text-center mt-4 pb-6">
+                <button onclick="goToPage('page-splash')" class="text-red-400 text-xs font-medium hover:text-red-600">登出帳號</button>
+             </div>
+        </div>
+    </div>
+    
+    <!-- ==================== 子頁面：兌換紀錄 (New) ==================== -->
+    <div id="sub-history" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+            <button onclick="goToPage('page-rewards')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">兌換紀錄</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-4 overflow-y-auto">
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+                <div>
+                    <p class="font-bold text-gray-800">LINE POINTS 50點</p>
+                    <p class="text-xs text-gray-400">2024/10/25 14:30</p>
                 </div>
-
-                <!-- 可捲動內容區 -->
-                <div class="flex-grow overflow-y-auto p-6 space-y-6"> <!-- 移除 pb-16 -->
-                    
-                    <!-- 總完成任務卡 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
-                        <p class="text-sm text-gray-500">您總共完成了</p>
-                        <p class="text-4xl font-bold text-green-600 my-2"><span id="home-tasks-completed">0</span> 項任務</p>
-                        <p class="text-sm text-gray-600">感謝您為社區的貢獻！</p>
-                    </div>
-
-                    <!-- 活動公告 -->
-                    <div>
-                        <h2 class="text-lg font-semibold text-gray-800 mb-3">活動公告</h2>
-                        <div class="bg-white rounded-lg shadow p-4">
-                            <img src="https://placehold.co/400x150/d1fae5/065f46?text=Weekend+Cleanup" alt="活動圖片" class="w-full rounded-lg object-cover mb-3">
-                            <h3 class="font-bold text-gray-800">週末淨灘英雄召集令！</h3>
-                            <p class="text-sm text-gray-600 mt-1">本週末在彰化海濱，我們需要您的力量，一起讓海岸線更美麗。</p>
-                        </div>
-                    </div>
-
-                    <!-- 永久任務 -->
-                    <div>
-                        <h2 class="text-lg font-semibold text-gray-800 mb-3">永久任務</h2>
-                        <div class="bg-white rounded-lg shadow p-4 flex items-center space-x-4">
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                                <i class="fa-solid fa-user-group fa-lg"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-800">邀請夥伴</h3>
-                                <p class="text-sm text-gray-600">邀請一位好友加入 CivicGo，即可獲得 20 積分！</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 通知 -->
-                    <div>
-                        <h2 class="text-lg font-semibold text-gray-800 mb-3">最新通知</h2>
-                        <div class="bg-white rounded-lg shadow divide-y divide-gray-100">
-                            <div class_id="notification-1" class="p-4 flex items-center space-x-3">
-                                <i class="fa-solid fa-circle-check text-green-500 fa-lg"></i>
-                                <p class="text-sm text-gray-700">您的任務「隨手撿垃圾」已通過驗證！獲得 10 點積分。</p>
-                            </div>
-                            <div class="p-4 flex items-center space-x-3">
-                                <i class="fa-solid fa-bullhorn text-blue-500 fa-lg"></i>
-                                <p class="text-sm text-gray-700">「募集二手冬衣」任務已更新地點，請查看詳情。</p>
-                            </div>
-                        </div>
-                    </div>
-
+                <span class="text-red-500 font-bold text-sm">-500</span>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center">
+                <div>
+                    <p class="font-bold text-gray-800">捐贈 - 華山基金會</p>
+                    <p class="text-xs text-gray-400">2024/10/20 09:15</p>
                 </div>
+                <span class="text-red-500 font-bold text-sm">-100</span>
+            </div>
+             <div class="text-center text-gray-400 text-sm mt-4">沒有更多紀錄了</div>
+        </div>
+    </div>
 
-                <!-- 底部導航 (全新 5 項目結構) --><div class="bottom-nav w-full bg-white flex justify-around items-center border-t border-gray-200 shadow-inner-top"> <!-- 移除 fixed 和 style -->
-                    <!-- 1. 主頁 (當前頁) -->
-                    <button onclick="goToPage('page-home')" class="bottom-nav-item text-green-600">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text-xs font-semibold mt-1">主頁</span>
-                    </button>
-                    <!-- 2. 社群 -->
-                    <button onclick="goToPage('page-community-feed')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text-xs mt-1">社群</span>
-                    </button>
-                    <!-- 3. 地圖 -->
-                    <button onclick="goToPage('page-map')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="text-xs mt-1">地圖</span>
-                    </button>
-                    <!-- 4. 獎勵 -->
-                    <button onclick="goToPage('page-rewards')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="text-xs mt-1">獎勵</span>
-                    </button>
-                    <!-- 5. 個人 -->
-                    <button onclick="goToPage('page-garden')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="text-xs mt-1">個人</span>
-                    </button>
+    <!-- ==================== 子頁面：花朵圖鑑 (New) ==================== -->
+    <div id="sub-collection" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+            <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">花朵圖鑑</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-6 overflow-y-auto">
+            <!-- 一般植物 -->
+            <div>
+                <h3 class="text-gray-600 font-bold mb-3">一般植物</h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-solid fa-clover text-3xl text-pink-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">粉紅幸運草</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-solid fa-sun text-3xl text-yellow-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">向日葵</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-brands fa-pagelines text-3xl text-purple-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">鬱金香</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-solid fa-leaf text-3xl text-red-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">玫瑰</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- 
-                ============================================================
-                新增畫面 (Rewards): 獎勵
-                ============================================================
-            --><div id="page-rewards" class="page bg-gray-50">
-                <!-- 頂部導航 --><div class="mini-app-header w-full p-4 flex items-center justify-between shadow-sm">
-                    <h1 class="text-xl font-bold text-gray-800">獎勵</h1>
-                    <span class="w-10 h-10"></span> <!-- 佔位符 -->
-                </div>
-
-                <!-- 可捲動內容區 -->
-                <div class="flex-grow overflow-y-auto p-6 space-y-6"> <!-- 移除 pb-16 -->
-                    
-                    <!-- 顯示目前積分 -->
-                    <div class="bg-white rounded-lg shadow-lg p-6 text-center">
-                        <p class="text-sm text-gray-500">我目前的積分</p>
-                        <p class="text-4xl font-bold text-green-600 my-2" id="rewards-current-points">0</p>
+            <!-- 稀有發光植物 -->
+            <div>
+                <h3 class="text-gray-600 font-bold mb-3 flex items-center gap-2">
+                    稀有發光植物 <span class="text-[10px] bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">連續 7 天達成</span>
+                </h3>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-800 rounded-xl p-3 flex flex-col items-center shadow-sm border border-amber-500/30 relative overflow-hidden group">
+                         <div class="absolute inset-0 bg-amber-400/10 animate-pulse-slow"></div>
+                        <i class="fa-solid fa-spa text-3xl text-amber-300 mb-2 animate-glow z-10"></i>
+                        <span class="text-xs text-amber-100 z-10 font-bold">月光蕨</span>
                     </div>
-
-                    <!-- 獎勵兌換 (從 page-garden 移入) -->
-                    <div class="bg-white p-6 shadow-inner-top rounded-lg"> 
-                        <h3 class="text-lg font-semibold text-gray-800 mb-4">積分兌換</h3>
-                        <div class="space-y-4">
-                            <button id="redeem-line-btn-clone" onclick="redeemLinePoints(500)" class="w-full bg-[#06C755] text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-between shadow transition-opacity duration-200 enabled:hover:opacity-80">
-                                <span><i class="fa-brands fa-line fa-lg mr-2"></i>兌換 50 點 LINE POINTS</span>
-                                <span class="bg-white text-green-600 text-sm font-bold px-2 py-1 rounded">500 積分</span>
-                            </button>
-                            <button id="redeem-coffee-btn-clone" onclick="redeemCoffeeVoucher(300)" class="w-full bg-yellow-500 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-between shadow transition-opacity duration-200 enabled:hover:opacity-80">
-                                <span><i class="fa-solid fa-store mr-2"></i>兌換 在地商家咖啡券</span>
-                                <span class="bg-white text-yellow-800 text-sm font-bold px-2 py-1 rounded">300 積分</span>
-                            </button>
-                        </div>
+                    <div class="bg-slate-100 rounded-xl p-3 flex flex-col items-center shadow-inner opacity-60">
+                        <i class="fa-solid fa-question text-3xl text-gray-400 mb-2"></i>
+                        <span class="text-xs text-gray-500">???</span>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 社區特有種 -->
+            <div>
+                <h3 class="text-gray-600 font-bold mb-3 flex items-center gap-2">
+                    社區特有種 <span class="text-[10px] bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full">高難度任務</span>
+                </h3>
+                <div class="grid grid-cols-3 gap-4">
+                     <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm border-2 border-teal-100">
+                        <i class="fa-solid fa-certificate text-3xl text-yellow-500 mb-2"></i>
+                        <span class="text-xs text-gray-600 font-bold">菊花</span>
+                        <span class="text-[10px] text-teal-500">彰化縣花</span>
+                    </div>
+                     <div class="bg-slate-50 rounded-xl p-3 flex flex-col items-center shadow-inner opacity-60">
+                        <i class="fa-solid fa-lock text-3xl text-gray-300 mb-2"></i>
+                        <span class="text-xs text-gray-500">???</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <!-- 底部導航 (全新 5 項目結構) --><div class="bottom-nav w-full bg-white flex justify-around items-center border-t border-gray-200 shadow-inner-top"> <!-- 移除 fixed 和 style -->
-                    <!-- 1. 主頁 -->
-                    <button onclick="goToPage('page-home')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-house"></i>
-                        <span class="text-xs mt-1">主頁</span>
-                    </button>
-                    <!-- 2. 社群 -->
-                    <button onclick="goToPage('page-community-feed')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-users"></i>
-                        <span class="text-xs mt-1">社群</span>
-                    </button>
-                    <!-- 3. 地圖 -->
-                    <button onclick="goToPage('page-map')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-map-location-dot"></i>
-                        <span class="text-xs mt-1">地圖</span>
-                    </button>
-                    <!-- 4. 獎勵 (當前頁) -->
-                    <button onclick="goToPage('page-rewards')" class="bottom-nav-item text-green-600">
-                        <i class="fa-solid fa-gift"></i>
-                        <span class="text-xs font-semibold mt-1">獎勵</span>
-                    </button>
-                    <!-- 5. 個人 -->
-                    <button onclick="goToPage('page-garden')" class="bottom-nav-item text-gray-500">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="text-xs mt-1">個人</span>
-                    </button>
+    <!-- ==================== 子頁面：我的影響力 ==================== -->
+    <div id="sub-impact" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+            <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">我的影響力</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-4 overflow-y-auto pb-20">
+            <!-- 影響力卡片 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm text-center animate-fade-in-up">
+                <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-list-check"></i></div>
+                <p class="text-gray-500 text-xs">總共完成</p>
+                <h2 class="text-3xl font-bold text-gray-800 my-1"><span id="impact-count">0</span> <span class="text-base font-normal">項</span></h2>
+                <p class="text-gray-800 font-bold">任務</p>
+                <div class="bg-slate-50 p-2 rounded-lg mt-4 text-xs text-slate-500">平台已累計完成 10,234 項任務</div>
+            </div>
+             <div class="bg-white p-6 rounded-2xl shadow-sm text-center animate-fade-in-up" style="animation-delay: 0.1s">
+                <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-clock"></i></div>
+                <p class="text-gray-500 text-xs">總共貢獻</p>
+                <h2 class="text-3xl font-bold text-gray-800 my-1"><span id="impact-hours">0.0</span> <span class="text-base font-normal">小時</span></h2>
+                <p class="text-gray-800 font-bold">社區服務</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm text-center animate-fade-in-up" style="animation-delay: 0.2s">
+                <div class="w-16 h-16 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-box-archive"></i></div>
+                <p class="text-gray-500 text-xs">總共募集</p>
+                <h2 class="text-3xl font-bold text-gray-800 my-1"><span id="impact-items">0</span> <span class="text-base font-normal">件</span></h2>
+                <p class="text-gray-800 font-bold">資源</p>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm text-center animate-fade-in-up" style="animation-delay: 0.3s">
+                <div class="w-16 h-16 bg-cyan-50 text-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl"><i class="fa-solid fa-user-group"></i></div>
+                <p class="text-gray-500 text-xs">總共邀請</p>
+                <h2 class="text-3xl font-bold text-gray-800 my-1">0 <span class="text-base font-normal">位</span></h2>
+                <p class="text-gray-800 font-bold">夥伴</p>
+                <div class="bg-slate-50 p-2 rounded-lg mt-4 text-xs text-slate-500">至今平台已有 2,000 位鄰里英雄</div>
+            </div>
+            <!-- 新增：分享按鈕 -->
+            <button onclick="showSimpleAlert('已產生影響力圖片，快分享給朋友！')" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition mt-4 animate-fade-in-up" style="animation-delay: 0.4s">
+                <i class="fa-solid fa-share-nodes mr-2"></i> 分享我的成就
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 子頁面：合作 NPO 與社區 ==================== -->
+    <div id="sub-partners" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+             <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">合作夥伴</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-4 overflow-y-auto">
+            <p class="text-center text-gray-500 text-sm mb-4">感謝所有在地夥伴，共同為社區努力。</p>
+            <div class="grid grid-cols-2 gap-4">
+                <!-- 互動式 Partner 卡片 -->
+                <div onclick="showPartnerInfo('華山基金會', '服務在地獨居長輩，提供關懷訪視。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600"><i class="fa-solid fa-heart"></i></div>
+                    <span class="font-bold text-sm text-gray-700">華山基金會</span>
+                </div>
+                <div onclick="showPartnerInfo('伊甸基金會', '為身心障礙者提供多元服務。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600"><i class="fa-solid fa-wheelchair"></i></div>
+                    <span class="font-bold text-sm text-gray-700">伊甸基金會</span>
+                </div>
+                <div onclick="showPartnerInfo('家扶中心', '幫助弱勢兒童與家庭。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600"><i class="fa-solid fa-child"></i></div>
+                    <span class="font-bold text-sm text-gray-700">家扶中心</span>
+                </div>
+                <!-- 修正：彰師大獅子會 -->
+                <div onclick="showPartnerInfo('彰師大獅子會', '致力於社區營造與環境維護。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600"><i class="fa-solid fa-users-rays"></i></div>
+                    <span class="font-bold text-sm text-gray-700">彰師大獅子會</span>
+                </div>
+                 <!-- 修正：慈濟基金會 (雙手 Logo) -->
+                 <div onclick="showPartnerInfo('慈濟基金會', '推動環保回收與慈善事業。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center text-teal-600"><i class="fa-solid fa-hands-holding-circle"></i></div>
+                    <span class="font-bold text-sm text-gray-700">慈濟基金會</span>
+                </div>
+                <div onclick="showPartnerInfo('彰化野鳥學會', '保護在地生態與鳥類棲地。')" class="bg-white p-4 rounded-xl shadow-sm flex flex-col items-center gap-3 cursor-pointer hover:shadow-md transition">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600"><i class="fa-solid fa-crow"></i></div>
+                    <span class="font-bold text-sm text-gray-700">野鳥學會</span>
+                </div>
+            </div>
+             <button onclick="showSimpleAlert('表單尚未開放')" class="w-full mt-4 bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition">
+                成為合作夥伴
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== 子頁面：參與 CSR ==================== -->
+    <div id="sub-csr" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+            <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">參與 CSR</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-6 overflow-y-auto">
+            <p class="text-gray-600 text-sm">帶著員工一起參與企業社會責任，將每一份影響力數據化。歡迎 <a href="#" class="text-teal-600 underline">了解企業方案</a>。</p>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">企業統一編號</label>
+                    <input type="text" id="csr-id" class="w-full mt-1 p-3 bg-slate-50 rounded-lg outline-none border border-transparent focus:border-teal-500 transition" placeholder="請輸入統編">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider">員工編號</label>
+                    <input type="text" class="w-full mt-1 p-3 bg-slate-50 rounded-lg outline-none border border-transparent focus:border-teal-500 transition" placeholder="請輸入工號">
                 </div>
             </div>
 
-            <!-- 自定義提示框 --><div id="custom-alert" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-lg shadow-xl p-8 w-11/12 text-center" style="display: none; z-index: 999;">
-                <p id="custom-alert-message" class="text-gray-700 text-lg">訊息</p>
-                <button onclick="closeSimpleAlert()" class="mt-6 w-full bg-green-500 text-white font-semibold py-2 rounded-lg">
-                    確認
+            <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-amber-600 font-bold">我的邀請碼</p>
+                    <p class="text-2xl font-bold text-amber-700 tracking-widest">B9F53A</p>
+                </div>
+                <button onclick="copyInviteCode()" class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-amber-500 shadow-sm active:scale-95 transition"><i class="fa-regular fa-copy"></i></button>
+            </div>
+
+            <div class="space-y-3">
+                <button onclick="showSimpleAlert('連結已複製，快去分享給同事吧！')" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition">
+                    <i class="fa-solid fa-share-nodes mr-2"></i> 分享邀請連結
+                </button>
+                <button onclick="submitCSR()" class="w-full bg-white text-teal-600 font-bold py-3 rounded-xl shadow-sm border border-teal-100 hover:bg-teal-50 transition">
+                    綁定企業帳號
                 </button>
             </div>
-            <div id="alert-overlay" class="absolute inset-0 bg-black/40" style="display: none; z-index: 998;" onclick="closeSimpleAlert()"></div>
+        </div>
+    </div>
 
-        </div> <!-- 結束 .mobile-content --></div> <!-- 結束 .mobile-shell --><script>
-        // --- 全域狀態管理 (模擬) ---
-        let currentPoints = 0;
-        let tasksCompleted = 0;
-        let flowersInGarden = [];
-        let trustScore = 100; 
-        let acceptedTasks = []; // 新增：儲存已接受的任務
-        let currentTaskToValidate = null; // 儲存當前要驗證的任務 ID
+    <!-- ==================== 子頁面：聯絡我們 ==================== -->
+    <div id="sub-contact" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+            <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">聯絡我們</h1>
+        </div>
+        <div class="flex-grow p-6 space-y-6 overflow-y-auto">
+            <!-- 常見問題 -->
+            <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                <div class="p-4 border-b border-slate-100 bg-slate-50 font-bold text-gray-600">常見問題</div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>如何獲得積分？</span>
+                        <i class="fa-solid fa-chevron-down faq-icon transition-transform"></i>
+                    </button>
+                    <div class="faq-answer">完成地圖上的任務並通過 AI 驗證，即可獲得對應積分。</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>積分可以做什麼？</span>
+                        <i class="fa-solid fa-chevron-down faq-icon transition-transform"></i>
+                    </button>
+                    <div class="faq-answer">積分可以用來種植城市花園，或兌換 LINE POINTS 及商家優惠。</div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>任務審核需要多久？</span>
+                        <i class="fa-solid fa-chevron-down faq-icon transition-transform"></i>
+                    </button>
+                    <div class="faq-answer">AI 驗證通常在 10 秒內完成，人工複審則約需 1-3 個工作天。</div>
+                </div>
+                <!-- 新增問題 -->
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">
+                        <span>信用積分是什麼？</span>
+                        <i class="fa-solid fa-chevron-down faq-icon transition-transform"></i>
+                    </button>
+                    <div class="faq-answer">信用積分是您在平台上的信譽指數。誠實完成任務可累積信用，若有違規行為則會扣分。高信用分可解鎖更多高級任務與獎勵！</div>
+                </div>
+            </div>
 
-        // --- 任務資料庫 (模擬) ---
-        const taskDatabase = {
-            'task1': {
-                id: 'task1',
-                title: '隨手撿垃圾',
-                type: '任務導向',
-                location: '進德路安全島 (距離 50m)',
-                description: '協助清理該區域的塑膠瓶與紙屑。環境需要你我共同守護！',
-                validation: 'AI 圖像辨識',
-                reward: 10,
-                completed: false
-            },
-            'task2': {
-                id: 'task2',
-                title: '捐贈二手書 (7成新)',
-                type: '資源導向',
-                location: '彰化師大圖書館 (距離 200m)',
-                description: '讓知識流動！圖書館正為偏鄉募集兒童讀物。',
-                validation: '櫃台人員掃碼',
-                reward: 20,
-                completed: false
-            },
-            'task3': {
-                id: 'task3',
-                title: '募集二手冬衣 (NPO)',
-                type: '社區需求',
-                location: '彰師大特教系辦 (距離 150m)',
-                description: '為獨居長者募集二手保暖冬衣，您的愛心是冬日裡最暖的陽光。',
-                validation: '志工確認',
-                reward: 30,
-                completed: false
-            }
-        };
-
-        // --- 頁面導航 ---
-        let currentPage = 'page-splash';
-
-        function goToPage(pageId) {
-            const pages = document.querySelectorAll('.page');
-            pages.forEach(page => {
-                if (page.id === pageId) {
-                    page.classList.add('active');
-                    if (pageId === 'page-home') {
-                        updateHomeStats();
-                    }
-                    if (pageId === 'page-garden') {
-                        updateGardenStats();
-                    }
-                    if (pageId === 'page-rewards') {
-                        updateRewardsStats();
-                    }
-                    if (pageId === 'page-community-feed') { // 更新：指向新頁面
-                        // 更新排行榜分頁中的積分
-                        document.getElementById('ranking-your-points-clone').innerText = currentPoints;
-                    }
-                    if (pageId === 'page-map') {
-                        updateTaskPinsStatus(); // 每次到地圖頁都更新圖釘
-                    }
-                } else {
-                    page.classList.remove('active');
-                }
-            });
-            currentPage = pageId;
-        }
-
-        // --- 彈窗 (Modal) 控制 ---
-        function showModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        // --- 自定義提示框 (取代 alert) ---
-        function showSimpleAlert(message) {
-            document.getElementById('custom-alert-message').innerText = message;
-            document.getElementById('custom-alert').style.display = 'block';
-            document.getElementById('alert-overlay').style.display = 'block';
-        }
-        function closeSimpleAlert() {
-            document.getElementById('custom-alert').style.display = 'none';
-            document.getElementById('alert-overlay').style.display = 'none';
-        }
-        window.alert = showSimpleAlert;
-
-
-        // --- 【修改】社群分頁切換 (膠囊樣式) ---
-        function showTab(tabName) {
-            const feedBtn = document.getElementById('tab-btn-feed');
-            const rankingBtn = document.getElementById('tab-btn-ranking');
+            <!-- 表單 -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm space-y-4">
+                <h3 class="font-bold text-gray-800">意見回饋</h3>
+                <input type="email" class="w-full p-3 bg-slate-50 rounded-lg text-sm outline-none" placeholder="您的 Email">
+                <input type="text" class="w-full p-3 bg-slate-50 rounded-lg text-sm outline-none" placeholder="主旨">
+                <textarea class="w-full p-3 bg-slate-50 rounded-lg text-sm outline-none resize-none" rows="4" placeholder="請輸入您的建議..."></textarea>
+                <button onclick="showSimpleAlert('訊息已發送，我們將盡快回覆您！')" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl hover:bg-teal-600 transition">發送訊息</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== 子頁面：關於 CivicGo (v1 內容) ==================== -->
+    <div id="sub-about" class="page bg-slate-50">
+        <div class="bg-white p-4 shadow-sm flex items-center gap-4 sticky top-0 z-20">
+             <button onclick="goToPage('page-garden')" class="w-8 h-8 flex items-center justify-center text-gray-600"><i class="fa-solid fa-arrow-left"></i></button>
+            <h1 class="text-lg font-bold">關於 CivicGo</h1>
+        </div>
+        <div class="p-8 text-center pb-20 overflow-y-auto">
+             <div class="w-24 h-24 bg-teal-500 rounded-2xl mx-auto mb-6 flex items-center justify-center text-white text-4xl shadow-lg animate-float"><i class="fa-solid fa-seedling"></i></div>
+             <h2 class="text-2xl font-bold text-gray-800 mb-2">CivicGo</h2>
+             <p class="text-gray-500 text-sm mb-8">讓改變，從巷口開始 v2.0</p>
+             <div class="text-left bg-white p-6 rounded-2xl shadow-sm space-y-4">
+                 <p class="text-gray-700 text-sm leading-relaxed">CivicGo 是一個建立於 LINE 生態系，專為 Z 世代設計的遊戲化微型公民參與平台。</p>
+                 <p class="text-gray-700 text-sm leading-relaxed">我們將宏大的社會關懷「微粒化」為 10 分鐘可完成的在地任務，透過「城市花園」的可視化成就系統，將抽象的貢獻轉化為具體的幸福感與持續行動的內在動力。</p>
+             </div>
+             <div class="mt-8 text-left space-y-3">
+                <a href="#" class="block bg-red-50 text-red-600 p-4 rounded-xl flex items-center gap-4 hover:bg-red-100 transition">
+                    <i class="fa-brands fa-youtube text-2xl"></i>
+                    <div>
+                        <p class="font-bold text-sm">觀看 CivicGo 故事影片</p>
+                        <p class="text-xs opacity-70">Youtube</p>
+                    </div>
+                </a>
+                <a href="#" class="block bg-blue-50 text-blue-600 p-4 rounded-xl flex items-center gap-4 hover:bg-blue-100 transition">
+                    <i class="fa-solid fa-file-signature text-2xl"></i>
+                    <div>
+                        <p class="font-bold text-sm">加入我們 / 填寫問卷</p>
+                        <p class="text-xs opacity-70">SurveyCake</p>
+                    </div>
+                </a>
+             </div>
+             <p class="text-xs text-gray-400 mt-8">© 2025 CivicGo Team. All rights reserved.</p>
+        </div>
+    </div>
+    
+    <!-- ==================== 發佈頁面 (完整表單) ==================== -->
+    <div id="page-post" class="page bg-white">
+         <div class="p-4 flex items-center gap-4 shadow-sm bg-white sticky top-0 z-10">
+            <button onclick="goToPage('page-map')" class="text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+            <h1 class="font-bold text-lg">發布需求</h1>
+        </div>
+        <div class="flex-grow overflow-y-auto p-6 space-y-6 pb-20">
+            <div class="bg-blue-50 p-4 rounded-xl text-blue-800 text-sm">
+                <i class="fa-solid fa-circle-info mr-2"></i> 發布的需求將經過社群審核後上架。
+            </div>
             
-            if (tabName === 'feed') {
-                // 啟用動態按鈕
-                feedBtn.classList.add('bg-white', 'text-green-600', 'shadow-md');
-                feedBtn.classList.remove('text-gray-600');
-                // 禁用排行榜按鈕
-                rankingBtn.classList.remove('bg-white', 'text-green-600', 'shadow-md');
-                rankingBtn.classList.add('text-gray-600');
-            } else {
-                // 禁用動態按鈕
-                feedBtn.classList.remove('bg-white', 'text-green-600', 'shadow-md');
-                feedBtn.classList.add('text-gray-600');
-                // 啟用排行榜按鈕
-                rankingBtn.classList.add('bg-white', 'text-green-600', 'shadow-md');
-                rankingBtn.classList.remove('text-gray-600');
-            }
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">任務標題</label>
+                    <input type="text" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition" placeholder="例如：週末公園淨灘活動">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">任務描述</label>
+                    <textarea class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition resize-none" rows="4" placeholder="請描述任務內容、目標與注意事項..."></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">地點</label>
+                        <input type="text" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition" placeholder="例如：大安森林公園">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">時間</label>
+                        <input type="text" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition" placeholder="例如：週六上午 9:00">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">需求人數</label>
+                        <input type="number" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition" placeholder="5">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">提供積分</label>
+                        <input type="number" class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition" placeholder="50">
+                    </div>
+                </div>
+
+                <!-- 新增：驗證方式 -->
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">驗證方式</label>
+                    <div class="relative">
+                        <select class="w-full p-3 bg-gray-50 rounded-xl border border-gray-200 focus:border-teal-500 outline-none transition appearance-none">
+                            <option value="ai">AI 圖像辨識 (建議)</option>
+                            <option value="manual">人工審核</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <button onclick="showSimpleAlert('需求已送出審核！'); goToPage('page-map')" class="w-full bg-teal-500 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-teal-600 transition active:scale-95">
+                        確認發布
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 任務彈窗 (Task Modal) ==================== -->
+    <div id="modal-task" class="fixed inset-0 bg-black/40 z-50 hidden flex-col justify-end opacity-0 transition-opacity duration-300" onclick="closeTaskModal()">
+        <div class="bg-white rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300" id="modal-content" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6"></div>
+            <div id="task-detail-inject">
+                <!-- JS 注入內容 -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== 捐贈選擇彈窗 (Donate Modal) ==================== -->
+    <div id="modal-donate" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6" onclick="closeDonateModal()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 text-center" onclick="event.stopPropagation()">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">選擇捐贈對象</h3>
+            <div class="space-y-3 mb-4 max-h-60 overflow-y-auto">
+                <button onclick="selectNPO(this, '華山基金會')" class="npo-option w-full text-left p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-3">
+                    <div class="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center text-red-500"><i class="fa-solid fa-heart"></i></div>
+                    <span class="font-medium text-gray-700">華山基金會</span>
+                </button>
+                <button onclick="selectNPO(this, '伊甸基金會')" class="npo-option w-full text-left p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-3">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-500"><i class="fa-solid fa-wheelchair"></i></div>
+                    <span class="font-medium text-gray-700">伊甸基金會</span>
+                </button>
+                <button onclick="selectNPO(this, '家扶中心')" class="npo-option w-full text-left p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-500"><i class="fa-solid fa-child"></i></div>
+                    <span class="font-medium text-gray-700">家扶中心</span>
+                </button>
+            </div>
+            <div id="donate-input-area" class="hidden">
+                <p class="text-sm text-gray-500 mb-2">請輸入捐贈積分 (現有: <span id="donate-modal-points">0</span>)</p>
+                <input type="number" id="donate-amount" class="w-full p-3 bg-slate-50 rounded-xl text-center font-bold text-lg outline-none focus:ring-2 focus:ring-teal-500 mb-4" placeholder="50">
+                <button onclick="confirmDonation()" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition">確認捐贈</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== 篩選彈窗 ==================== -->
+    <div id="modal-filter" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6" onclick="closeFilterModal()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">篩選條件</h3>
+                <button onclick="closeFilterModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                    <p class="font-bold text-gray-700 mb-2 text-sm">任務類型</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-4 py-2 rounded-lg bg-teal-50 text-teal-600 text-sm font-medium border border-teal-200">全部</button>
+                        <button class="px-4 py-2 rounded-lg bg-white text-gray-500 text-sm border border-gray-200">環境維護</button>
+                        <button class="px-4 py-2 rounded-lg bg-white text-gray-500 text-sm border border-gray-200">資源分享</button>
+                        <button class="px-4 py-2 rounded-lg bg-white text-gray-500 text-sm border border-gray-200">社區互助</button>
+                    </div>
+                </div>
+                <div>
+                    <p class="font-bold text-gray-700 mb-2 text-sm">距離範圍</p>
+                    <input type="range" min="1" max="10" value="3" class="w-full accent-teal-500">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>1km</span>
+                        <span>5km</span>
+                        <span>10km</span>
+                    </div>
+                </div>
+                <button onclick="closeFilterModal(); showSimpleAlert('篩選條件已套用')" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition">套用篩選</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ==================== 留言彈窗 ==================== -->
+    <div id="modal-comments" class="fixed inset-0 bg-black/60 z-50 hidden flex-col justify-end" onclick="closeCommentsModal()">
+        <div class="bg-white rounded-t-3xl p-6 h-[70vh] flex flex-col" onclick="event.stopPropagation()">
+            <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-4 flex-shrink-0"></div>
+            <h3 class="text-lg font-bold text-gray-800 mb-4 text-center flex-shrink-0">留言</h3>
             
-            // 切換面板內容
-            document.getElementById('tab-panel-feed').classList.toggle('active', tabName === 'feed');
-            document.getElementById('tab-panel-ranking').classList.toggle('active', tabName === 'ranking');
+            <div id="comments-list" class="flex-grow overflow-y-auto space-y-4 mb-4 pr-2">
+                <!-- 留言內容 JS 注入 -->
+            </div>
+            
+            <div class="flex gap-2 flex-shrink-0 border-t pt-3">
+                <input type="text" id="comment-input" class="flex-grow bg-gray-50 rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-teal-500" placeholder="發表留言...">
+                <button onclick="sendComment()" class="w-10 h-10 bg-teal-500 text-white rounded-full flex items-center justify-center shadow-sm hover:bg-teal-600 transition">
+                    <i class="fa-solid fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </div>
 
-            // 如果切換到排行榜，刷新一下積分
-            if (tabName === 'ranking') {
-                document.getElementById('ranking-your-points-clone').innerText = currentPoints;
-            }
-        }
+    <!-- ==================== 通知彈窗 ==================== -->
+    <div id="modal-notification" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6" onclick="toggleNotificationModal()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 max-h-[60vh] overflow-y-auto" onclick="event.stopPropagation()">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">通知中心</h3>
+                <button onclick="toggleNotificationModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div class="space-y-3">
+                <div class="p-3 bg-slate-50 rounded-xl flex items-start gap-3">
+                    <div class="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                        <p class="text-sm text-gray-700 font-medium">任務驗證通過</p>
+                        <p class="text-xs text-gray-500">您的「隨手撿垃圾」任務已完成，獲得 10 積分。</p>
+                        <span class="text-[10px] text-gray-400">1小時前</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl flex items-start gap-3">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                        <p class="text-sm text-gray-700 font-medium">任務更新</p>
+                        <p class="text-xs text-gray-500">「募集二手冬衣」任務地點已變更，請查看詳情。</p>
+                        <span class="text-[10px] text-gray-400">昨天</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl flex items-start gap-3">
+                    <div class="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <div>
+                        <p class="text-sm text-gray-700 font-medium">系統公告</p>
+                        <p class="text-xs text-gray-500">歡迎加入 CivicGo！快去探索身邊的微任務吧。</p>
+                        <span class="text-[10px] text-gray-400">2天前</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // --- 核心流程 ---
+    <!-- ==================== 驗證成功彈窗 ==================== -->
+    <div id="modal-success" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-6" onclick="closeSuccessModal()">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-8 text-center transform scale-90 transition-transform duration-300" id="success-content" onclick="event.stopPropagation()">
+            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl animate-bounce">
+                🎉
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">任務完成！</h2>
+            <p class="text-gray-500 mb-6">感謝您的付出，花園裡長出了一朵新花！</p>
+            <div class="bg-slate-50 p-4 rounded-xl mb-6 flex justify-center items-baseline gap-2">
+                <span class="text-teal-600 font-bold text-3xl">+<span id="success-points">10</span></span>
+                <span class="text-gray-400 text-xs">積分</span>
+            </div>
+            <button onclick="closeSuccessModal()" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition">太棒了</button>
+        </div>
+    </div>
+
+
+    <!-- ==================== 底部導航列 (Global) ==================== -->
+    <div class="bottom-nav fixed bottom-0 left-0 w-full flex justify-around items-center z-40">
+        <button onclick="goToPage('page-home')" class="nav-item active flex flex-col items-center p-2 w-1/5" data-target="page-home">
+            <i class="fa-solid fa-house text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">主頁</span>
+        </button>
+        <button onclick="goToPage('page-community')" class="nav-item flex flex-col items-center p-2 w-1/5" data-target="page-community">
+            <i class="fa-solid fa-users text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">社群</span>
+        </button>
+        <button onclick="goToPage('page-map')" class="nav-item flex flex-col items-center p-2 w-1/5" data-target="page-map">
+            <i class="fa-solid fa-map-location-dot text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">地圖</span>
+        </button>
+        <button onclick="goToPage('page-rewards')" class="nav-item flex flex-col items-center p-2 w-1/5" data-target="page-rewards">
+            <i class="fa-solid fa-gift text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">獎勵</span>
+        </button>
+        <button onclick="goToPage('page-garden')" class="nav-item flex flex-col items-center p-2 w-1/5" data-target="page-garden">
+            <i class="fa-solid fa-user text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">個人</span>
+        </button>
+    </div>
+
+</div>
+
+<script>
+    // --- 狀態管理 ---
+    let state = {
+        points: 1000,
+        tasksCompleted: 0,
+        flowers: [],
+        acceptedTasks: [],
+        hasCheckedIn: false
+    };
+    
+    // 捐贈狀態
+    let selectedNPO = '';
+
+    // 留言資料 (Mock)
+    const postComments = {
+        'post1': [
+            { user: 'Alice', content: '哇！太棒了，我也想參加下次的活動！😍' },
+            { user: 'Bob', content: '感謝你的付出 👍👍' },
+            { user: 'Charlie', content: '辛苦了！' }
+        ],
+        'post2': [
+             { user: 'David', content: '我也有一堆舊書想捐，請問還有收嗎？' }
+        ]
+    };
+    let currentPostId = '';
+
+    // --- 資料庫 ---
+    const tasks = {
+        'task1': { id: 'task1', title: '隨手撿垃圾', type: '環境', time: '10 min', points: 10, icon: 'fa-trash-can', color: 'text-red-500', desc: '請協助清理進德路周邊的塑膠垃圾。' },
+        'task2': { id: 'task2', title: '捐贈二手書', type: '資源', time: '30 min', points: 20, icon: 'fa-book', color: 'text-blue-500', desc: '圖書館募集兒童繪本，請送至櫃台。 (需人工驗證)' },
+        'task3': { id: 'task3', title: '募集冬衣', type: '公益', time: '20 min', points: 15, icon: 'fa-shirt', color: 'text-yellow-500', desc: '為獨居長輩募集保暖衣物。' }
+    };
+
+    // --- 頁面導航 ---
+    function goToPage(pageId) {
+        document.querySelectorAll('.page').forEach(el => {
+            el.classList.remove('active');
+            el.style.opacity = '0';
+        });
         
-        // --- 新增：更新主頁狀態 ---
-        function updateHomeStats() {
-            document.getElementById('home-tasks-completed').innerText = tasksCompleted;
-        }
-
-        // --- 新增：更新獎勵頁狀態 ---
-        function updateRewardsStats() {
-            document.getElementById('rewards-current-points').innerText = currentPoints;
-        }
-
-        // 新增：更新地圖上所有圖釘的狀態
-        function updateTaskPinsStatus() {
-            Object.values(taskDatabase).forEach(task => {
-                const pin = document.getElementById(`pin-${task.id}`);
-                if (!pin) return;
-
-                if (task.completed) {
-                    pin.style.display = 'none'; // 隱藏已完成的
-                } else if (acceptedTasks.includes(task.id)) {
-                    pin.classList.add('active'); // 標記進行中 (閃爍)
-                } else {
-                    pin.classList.remove('active'); // 移除閃爍
+        const target = document.getElementById(pageId);
+        if (target) {
+            target.classList.add('active');
+            setTimeout(() => target.style.opacity = '1', 10);
+            
+            const isSubPage = pageId.startsWith('sub-') || pageId === 'page-splash' || pageId === 'page-post';
+            const nav = document.querySelector('.bottom-nav');
+            
+            if (isSubPage) {
+                nav.style.transform = 'translateY(100%)';
+                nav.style.transition = 'transform 0.3s';
+            } else {
+                nav.style.transform = 'translateY(0)';
+                document.querySelectorAll('.nav-item').forEach(btn => {
+                    if (btn.dataset.target === pageId) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+                updateUI();
+                if(pageId === 'page-map') {
+                    updateMapPins();
                 }
+            }
+        }
+    }
+
+    // --- 功能邏輯 ---
+    function updateUI() {
+        const pointsDisplays = ['home-tasks-count', 'reward-points-display', 'profile-total-points', 'rank-score'];
+        pointsDisplays.forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.innerText = (id === 'home-tasks-count' || id === 'profile-tasks-completed') ? state.tasksCompleted : state.points;
+        });
+
+        document.getElementById('profile-tasks-completed').innerText = state.tasksCompleted;
+        document.getElementById('impact-count').innerText = state.tasksCompleted;
+        document.getElementById('impact-hours').innerText = (state.tasksCompleted * 0.2).toFixed(1);
+        document.getElementById('rank-task-count').innerText = state.tasksCompleted;
+        
+        // 簽到狀態
+        if (state.hasCheckedIn) {
+            document.querySelectorAll('#page-home button[onclick^="checkInMood"]').forEach(btn => {
+                 btn.disabled = true;
+                 btn.classList.add('opacity-50', 'cursor-not-allowed');
+                 btn.classList.remove('hover:scale-110');
             });
+            document.getElementById('mood-title').innerText = '今日已簽到，明天見！';
         }
 
-        // 1. 顯示任務詳情
-        function showTaskDetail(taskId) {
-            const task = taskDatabase[taskId];
-            if (!task || task.completed) return; // 如果任務不存在或已完成，不顯示
+        renderGarden();
+    }
 
-            const contentEl = document.getElementById('task-detail-content');
-            contentEl.innerHTML = `
-                <span class="inline-block bg-green-100 text-green-700 text-xs font-semibold px-2 py-1 rounded-full mb-2">${task.type}</span>
-                <h2 class="text-2xl font-bold text-gray-800">${task.title}</h2>
-                <p class="text-gray-600 mt-2">${task.location}</p>
-                <p class="text-gray-700 mt-4">${task.description}</p>
-                <div class="mt-4 bg-gray-50 p-3 rounded-lg">
-                    <p class="text-sm font-medium text-gray-700">驗證方式：<span class="font-normal text-gray-600">${task.validation}</span></p>
-                    <p class="text-sm font-medium text-gray-700 mt-1">預計獎勵：<span class="font-bold text-green-600">${task.reward} 積分</span></p>
+    function renderGarden() {
+        const container = document.getElementById('garden-container');
+        if (!container) return;
+        
+        if (state.flowers.length === 0) {
+            container.innerHTML = '<div class="text-center text-sky-700/40 text-xs w-full absolute bottom-16">尚未種植花朵，快去解任務吧！</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        state.flowers.forEach((color, index) => {
+            const flower = document.createElement('div');
+            const delay = Math.random() * 2; 
+            flower.className = 'living-flower w-10 h-10 flex items-end justify-center';
+            flower.style.setProperty('--delay', delay);
+            flower.innerHTML = `
+                <i class="fa-solid fa-location-pin text-emerald-600 text-lg absolute bottom-0"></i>
+                <i class="fa-solid fa-clover text-3xl text-${color}-400 absolute bottom-2 animate-grow"></i>
+            `;
+            container.appendChild(flower);
+        });
+    }
+
+    // --- 任務模組 ---
+    function openTaskModal(taskId) {
+        const task = tasks[taskId];
+        const modal = document.getElementById('modal-task');
+        const content = document.getElementById('modal-content');
+        const inject = document.getElementById('task-detail-inject');
+        
+        inject.innerHTML = `
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center ${task.color} text-2xl">
+                    <i class="fa-solid ${task.icon}"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">${task.title}</h2>
+                    <div class="flex gap-2 mt-1">
+                        <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded">${task.type}</span>
+                        <span class="text-xs bg-amber-50 text-amber-600 px-2 py-0.5 rounded border border-amber-100">${task.time}</span>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-600 mb-6 text-sm leading-relaxed">${task.desc}</p>
+            <div class="flex gap-3" id="modal-actions">
+                <!-- 按鈕由 JS 決定 -->
+            </div>
+        `;
+
+        const actionDiv = document.getElementById('modal-actions');
+        if (state.acceptedTasks.includes(taskId)) {
+            actionDiv.innerHTML = `
+                <button onclick="closeTaskModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">取消</button>
+                <button onclick="completeTask('${taskId}', ${task.points})" class="flex-1 py-3 rounded-xl font-bold text-white bg-teal-500 shadow-lg shadow-teal-200 hover:bg-teal-600">
+                    <i class="fa-solid fa-camera mr-1"></i> 點擊驗證
+                </button>
+            `;
+        } else {
+             actionDiv.innerHTML = `
+                <button onclick="closeTaskModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">再看看</button>
+                <button onclick="acceptTask('${taskId}')" class="flex-1 py-3 rounded-xl font-bold text-white bg-teal-500 shadow-lg shadow-teal-200 hover:bg-teal-600">
+                    接受任務
+                </button>
+            `;
+        }
+
+        modal.classList.remove('hidden');
+        requestAnimationFrame(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('translate-y-full');
+        });
+    }
+    
+    function acceptTask(taskId) {
+        state.acceptedTasks.push(taskId);
+        closeTaskModal();
+        updateMapPins();
+    }
+
+    function closeTaskModal() {
+        const modal = document.getElementById('modal-task');
+        const content = document.getElementById('modal-content');
+        content.classList.add('translate-y-full');
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    function completeTask(taskId, points) {
+        closeTaskModal();
+        setTimeout(() => {
+            state.points += points;
+            state.tasksCompleted += 1;
+            const colors = ['pink', 'purple', 'yellow', 'red'];
+            state.flowers.push(colors[Math.floor(Math.random() * colors.length)]);
+            
+            state.acceptedTasks = state.acceptedTasks.filter(id => id !== taskId);
+            document.getElementById('success-points').innerText = points;
+            
+            const successModal = document.getElementById('modal-success');
+            const successContent = document.getElementById('success-content');
+            successModal.classList.remove('hidden');
+            requestAnimationFrame(() => successContent.classList.remove('scale-90'));
+            
+            const pin = document.querySelector(`.map-pin[onclick="openTaskModal('${taskId}')"]`);
+            if(pin) pin.style.display = 'none';
+
+            updateUI();
+        }, 1000);
+    }
+
+    function closeSuccessModal() {
+         const successModal = document.getElementById('modal-success');
+         successModal.classList.add('hidden');
+         goToPage('page-garden'); 
+    }
+    
+    function updateMapPins() {
+        const pins = document.querySelectorAll('.map-pin');
+        pins.forEach(pin => {
+            const taskId = pin.getAttribute('onclick').match(/'([^']+)'/)[1];
+            pin.classList.remove('active');
+            const existingLabel = pin.querySelector('.task-label');
+            if(existingLabel) existingLabel.style.display = 'none';
+            
+            if (state.acceptedTasks.includes(taskId)) {
+                pin.classList.add('active');
+                if(!existingLabel) {
+                     const label = document.createElement('span');
+                     label.className = 'task-label';
+                     label.innerText = '任務執行中';
+                     pin.appendChild(label);
+                } else {
+                    existingLabel.style.display = 'block';
+                }
+            }
+        });
+    }
+
+
+    // --- 社群功能 ---
+    function switchTab(tab) {
+        const btnFeed = document.getElementById('btn-feed');
+        const btnRank = document.getElementById('btn-rank');
+        const tabFeed = document.getElementById('tab-feed');
+        const tabRank = document.getElementById('tab-rank');
+
+        if (tab === 'feed') {
+            btnFeed.classList.add('bg-white', 'text-teal-600', 'shadow-sm');
+            btnFeed.classList.remove('text-slate-500');
+            btnRank.classList.remove('bg-white', 'text-teal-600', 'shadow-sm');
+            btnRank.classList.add('text-slate-500');
+            tabFeed.classList.remove('hidden');
+            tabRank.classList.add('hidden');
+        } else {
+            btnRank.classList.add('bg-white', 'text-teal-600', 'shadow-sm');
+            btnRank.classList.remove('text-slate-500');
+            btnFeed.classList.remove('bg-white', 'text-teal-600', 'shadow-sm');
+            btnFeed.classList.add('text-slate-500');
+            tabRank.classList.remove('hidden');
+            tabFeed.classList.add('hidden');
+        }
+    }
+
+    function addPost() {
+        const input = document.getElementById('post-input');
+        if(!input.value.trim()) return;
+        
+        const list = document.getElementById('feed-list');
+        const newPost = document.createElement('div');
+        newPost.className = 'bg-white p-4 rounded-2xl shadow-sm animate-grow origin-top';
+        newPost.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex items-center gap-2">
+                    <div class="app-logo-avatar flex-shrink-0"><i class="fa-solid fa-seedling"></i></div>
+                    <div>
+                        <p class="font-bold text-sm">NCUEfreshman</p>
+                        <p class="text-xs text-gray-400">剛剛</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-gray-700 text-sm mb-3">${input.value}</p>
+            <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
+                <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>0</span></button>
+                <button onclick="showSimpleAlert('留言功能開發中！')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>0</span></button>
+            </div>
+        `;
+        list.prepend(newPost);
+        input.value = '';
+    }
+
+    function toggleLike(btn) {
+        const icon = btn.querySelector('i');
+        const count = btn.querySelector('span');
+        let num = parseInt(count.innerText);
+        
+        if (icon.classList.contains('fa-regular')) {
+            icon.classList.replace('fa-regular', 'fa-solid');
+            icon.classList.add('text-red-500');
+            count.innerText = num + 1;
+        } else {
+            icon.classList.replace('fa-solid', 'fa-regular');
+            icon.classList.remove('text-red-500');
+            count.innerText = num - 1;
+        }
+    }
+    
+    // --- 留言功能 ---
+    function openComments(postId) {
+        currentPostId = postId; // 記錄當前開啟的貼文
+        const modal = document.getElementById('modal-comments');
+        const list = document.getElementById('comments-list');
+        list.innerHTML = ''; // 清空舊留言
+        
+        const comments = postComments[postId] || [];
+        comments.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'flex gap-3 animate-fade-in-up';
+            div.innerHTML = `
+                 <div class="app-logo-avatar w-8 h-8 flex-shrink-0 text-sm"><i class="fa-solid fa-user"></i></div>
+                <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none text-sm">
+                    <p class="font-bold text-gray-800 mb-1">${c.user}</p>
+                    <p class="text-gray-600">${c.content}</p>
                 </div>
             `;
-            
-            const acceptBtn = document.getElementById('accept-task-btn');
-
-            if (acceptedTasks.includes(taskId)) {
-                // 情況 2: 已接受，顯示「點擊驗證」
-                acceptBtn.innerText = '點擊驗證'; 
-                acceptBtn.onclick = () => goToValidationPage(taskId);
-            } else {
-                // 情況 1: 未接受，顯示「接受任務」
-                acceptBtn.innerText = '接受任務'; 
-                acceptBtn.onclick = () => acceptTask(taskId);
-            }
-
-            showModal('modal-task-detail');
+            list.appendChild(div);
+        });
+        
+        modal.classList.remove('hidden');
+    }
+    
+    function closeCommentsModal() {
+        document.getElementById('modal-comments').classList.add('hidden');
+        currentPostId = '';
+    }
+    
+    function sendComment() {
+        const input = document.getElementById('comment-input');
+        if(!input.value.trim()) return;
+        
+        const list = document.getElementById('comments-list');
+        const newComment = document.createElement('div');
+        newComment.className = 'flex gap-3 animate-fade-in-up';
+        newComment.innerHTML = `
+            <div class="app-logo-avatar w-8 h-8 flex-shrink-0 text-sm"><i class="fa-solid fa-seedling"></i></div>
+            <div class="bg-gray-50 p-3 rounded-xl rounded-tl-none text-sm">
+                <p class="font-bold text-gray-800 mb-1">NCUEfreshman</p>
+                <p class="text-gray-600">${input.value}</p>
+            </div>
+        `;
+        list.appendChild(newComment);
+        
+        // 儲存新留言 (模擬)
+        if(currentPostId) {
+             if(!postComments[currentPostId]) postComments[currentPostId] = [];
+             postComments[currentPostId].push({ user: 'NCUEfreshman', content: input.value });
         }
 
-        // 步驟 1.5: 使用者按下「接受任務」
-        function acceptTask(taskId) {
-            if (!acceptedTasks.includes(taskId)) {
-                acceptedTasks.push(taskId); // 加入已接受列表
-            }
-            
-            const pin = document.getElementById(`pin-${taskId}`);
-            if (pin) {
-                pin.classList.add('active'); // 增加閃爍效果
-            }
+        input.value = '';
+        list.scrollTop = list.scrollHeight;
+    }
 
-            closeModal('modal-task-detail'); // 關閉彈窗，回到地圖
+    // --- 篩選彈窗 ---
+    function openFilterModal() {
+        document.getElementById('modal-filter').classList.remove('hidden');
+    }
+    function closeFilterModal() {
+        document.getElementById('modal-filter').classList.add('hidden');
+    }
+
+    // --- 雜項 & 捐贈 ---
+    function checkInMood(btn) {
+        if (state.hasCheckedIn) return;
+        
+        btn.style.transform = 'scale(0.8)';
+        setTimeout(() => {
+            btn.style.transform = 'scale(1)';
+            showSimpleAlert('簽到成功！獲得 5 積分');
+            state.points += 5;
+            state.hasCheckedIn = true; 
+            updateUI();
+        }, 200);
+    }
+
+    function redeemItem(cost, name) {
+        if (state.points >= cost) {
+            state.points -= cost;
+            updateUI();
+            showSimpleAlert(`成功兌換：${name}`);
+        } else {
+            showSimpleAlert('積分不足！');
         }
+    }
 
-        // 步驟 1.6: 使用者按下「點擊驗證」，準備跳轉到驗證頁面
-        function goToValidationPage(taskId) {
-            currentTaskToValidate = taskId; // 儲存當前任務ID
-            const task = taskDatabase[taskId];
+    function openDonateModal() {
+        document.getElementById('donate-modal-points').innerText = state.points;
+        document.getElementById('modal-donate').classList.remove('hidden');
+        document.getElementById('donate-input-area').classList.add('hidden');
+        document.querySelectorAll('.npo-option').forEach(el => el.classList.remove('border-teal-500', 'bg-teal-50'));
+        selectedNPO = '';
+    }
+    
+    function closeDonateModal() {
+        document.getElementById('modal-donate').classList.add('hidden');
+    }
+    
+    function selectNPO(btn, name) {
+        document.querySelectorAll('.npo-option').forEach(el => el.classList.remove('border-teal-500', 'bg-teal-50'));
+        btn.classList.add('border-teal-500', 'bg-teal-50');
+        selectedNPO = name;
+        document.getElementById('donate-input-area').classList.remove('hidden');
+    }
 
-            // 更新驗證頁面的提示文字
-            const validationText = document.getElementById('validation-instruction');
-            if (validationText) {
-                if (taskId === 'task1') {
-                    validationText.innerText = '請拍攝您收集的垃圾袋';
-                } else if (taskId === 'task2') {
-                    validationText.innerText = '請拍攝您要捐贈的書籍';
-                } else if (taskId === 'task3') {
-                    validationText.innerText = '請拍攝您要捐贈的冬衣';
-                } else {
-                    validationText.innerText = '請拍攝任務完成證明';
-                }
-            }
-            
-            closeModal('modal-task-detail');
-            goToPage('page-validation');
+    function confirmDonation() {
+        const amountInput = document.getElementById('donate-amount');
+        const amount = parseInt(amountInput.value);
+        
+        if (!amount || amount <= 0) {
+            showSimpleAlert('請輸入有效金額');
+            return;
         }
-
-        // 顯示 AI 驗證讀取 (從驗證頁面觸發)
-        function startAIVerification() {
-            if (!currentTaskToValidate) return; // 安全檢查
-
-            const verifyingEl = document.getElementById('ai-verifying');
-            verifyingEl.style.display = 'flex'; // 顯示讀取動畫
-
-            // 模擬 AI 驗證 2 秒
-            setTimeout(() => {
-                verifyingEl.style.display = 'none'; // 隱藏讀取動畫
-                showValidationResult(currentTaskToValidate); // 顯示成功頁面
-                currentTaskToValidate = null; // 清除
-            }, 2000);
-        }
-
-
-        // 2. 顯示驗證結果 (任務成功)
-        function showValidationResult(taskId) {
-            const task = taskDatabase[taskId];
-            if (!task) return;
-
-            // 更新全域狀態
-            currentPoints += task.reward;
-            tasksCompleted += 1;
-            trustScore += 5; 
-            flowersInGarden.push(getRandomFlower()); 
-            task.completed = true; // 標記任務為已完成
-
-            // 從 acceptedTasks 陣列中移除
-            acceptedTasks = acceptedTasks.filter(id => id !== taskId);
-
-            // 移除圖釘的閃爍效果並隱藏
-            const pin = document.getElementById(`pin-${taskId}`);
-            if (pin) {
-                pin.classList.remove('active');
-                pin.style.display = 'none'; // 立即隱藏
-            }
-
-            document.getElementById('reward-points').innerText = task.reward;
-            
-            closeModal('modal-task-detail'); 
-            goToPage('page-success'); 
-        } 
-
-        // 3. 更新花園頁面 (個人中心)
-        function updateGardenStats() {
-            // 更新新的四格統計版
-            document.getElementById('garden-total-points').innerText = currentPoints;
-            document.getElementById('garden-tasks-completed').innerText = tasksCompleted;
-            document.getElementById('garden-trust-score').innerText = trustScore; 
-            
-            // 更新新版排行榜上的積分
-            document.getElementById('ranking-your-points-clone').innerText = currentPoints;
-            
-            // 更新戰績
-            // 這裡只是模擬，所以我們只更新「本年」
-            const annualTasksEl = document.querySelector('#page-garden span.font-bold.text-lg.text-gray-900');
-            if(annualTasksEl) {
-                // 簡易更新，假設所有任務都是今年的
-                document.querySelectorAll('#page-garden span.font-bold.text-lg.text-gray-900')[0].innerText = tasksCompleted;
-                document.querySelectorAll('#page-garden span.font-bold.text-lg.text-gray-900')[1].innerText = tasksCompleted;
-            }
-
-
-            const container = document.getElementById('flower-container');
-            container.innerHTML = ''; // 清空，重新繪製
-
-            // 調整花朵位置，讓它們在城市天際線之上
-            flowersInGarden.forEach((flowerSVG, index) => {
-                const flowerEl = document.createElement('div');
-                flowerEl.className = 'flower absolute'; // 使用 absolute 定位
-                const leftPosition = 15 + (index % 6) * 14; // 隨機分散在寬度內
-                const bottomPosition = 20 + (index % 3) * 15; // 高度也隨機調整 (從 20px ~ 50px)
-                flowerEl.style.cssText = `
-                    left: ${leftPosition}%; 
-                    bottom: ${bottomPosition}px; 
-                    transform: translateX(-50%) scale(0.5);
-                `;
-                flowerEl.innerHTML = flowerSVG;
-                container.appendChild(flowerEl);
-
-                setTimeout(() => {
-                    flowerEl.classList.add('visible');
-                    flowerEl.style.transform = `translateX(-50%) scale(1)`; // 讓花朵長大
-                }, 100 * index);
-            });
+        if (amount > state.points) {
+            showSimpleAlert('積分不足！');
+            return;
         }
         
-        // --- 獎勵兌換互動功能 ---
+        state.points -= amount;
+        updateUI();
+        closeDonateModal();
+        showSimpleAlert(`感謝！已捐贈 ${amount} 積分給 ${selectedNPO}。`);
+        amountInput.value = ''; 
+    }
+    
+    function copyInviteCode() {
+        showSimpleAlert('已複製邀請碼：B9F53A');
+    }
 
-        function redeemLinePoints(cost) {
-            if (currentPoints >= cost) {
-                // 扣除點數
-                currentPoints -= cost;
-                // 更新顯示
-                updateGardenStats(); // 這會刷新花園頁面上的所有數據
-                updateRewardsStats(); // 同時更新獎勵頁面
-                // 顯示成功提示
-                showSimpleAlert(`兌換成功！已花費 ${cost} 積分兌換 50 點 LINE POINTS。`);
-            } else {
-                // 顯示失敗提示
-                showSimpleAlert(`積分不足！您還需要 ${cost - currentPoints} 積分才能兌換。`);
-            }
+    function showSimpleAlert(message) {
+        const alertBox = document.createElement('div');
+        // 修正位置為頂部正中央 top-8
+        alertBox.className = 'fixed top-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg text-sm font-medium z-50 animate-fade-in-up';
+        alertBox.innerText = message;
+        document.body.appendChild(alertBox);
+        setTimeout(() => {
+            alertBox.style.opacity = '0';
+            setTimeout(() => alertBox.remove(), 300);
+        }, 2000);
+    }
+
+    function showPartnerInfo(name, desc) {
+        const alertBox = document.createElement('div');
+        alertBox.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6';
+        alertBox.innerHTML = `
+            <div class="bg-white rounded-2xl p-6 w-full max-w-sm animate-grow">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">${name}</h3>
+                <p class="text-gray-600 mb-6">${desc}</p>
+                <button class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl" onclick="this.parentElement.parentElement.remove()">關閉</button>
+            </div>
+        `;
+        document.body.appendChild(alertBox);
+    }
+
+    function submitCSR() {
+        const id = document.getElementById('csr-id').value;
+        if(id) {
+            showSimpleAlert('申請已送出！我們將盡快審核。');
+        } else {
+            showSimpleAlert('請輸入企業統編');
         }
+    }
+    
+    function toggleFaq(btn) {
+        btn.parentElement.classList.toggle('active');
+    }
 
-        function redeemCoffeeVoucher(cost) {
-            if (currentPoints >= cost) {
-                // 扣除點數
-                currentPoints -= cost;
-                // 更新顯示
-                updateGardenStats(); // 這會刷新花園頁面上的所有數據
-                updateRewardsStats(); // 同時更新獎勵頁面
-                // 顯示成功提示
-                showSimpleAlert(`兌換成功！已花費 ${cost} 積分兌換在地商家咖啡券。`);
-            } else {
-                // 顯示失敗提示
-                showSimpleAlert(`積分不足！您還需要 ${cost - currentPoints} 積分才能兌換。`);
-            }
+    function toggleNotificationModal() {
+        const modal = document.getElementById('modal-notification');
+        if(modal.classList.contains('hidden')) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
         }
+    }
+</script>
 
-        // 重設手動表單
-        function resetManualForm() {
-            const fields = ['task-title', 'task-description', 'task-location', 'task-time', 'task-people', 'task-reward'];
-            fields.forEach(id => {
-                document.getElementById(id).value = '';
-            });
-        }
-
-        function showCommunitySuccess() {
-            // closeModal('modal-community-post'); // 這頁面已非 modal
-            goToPage('page-map'); // 返回地圖
-            showModal('modal-community-success'); // 顯示成功彈窗
-            setTimeout(resetManualForm, 500); // 關閉時重設表單
-        }
-
-        function getRandomFlower() {
-            const colors = ['#EF4444', '#F59E0B', '#10B981', '#3B82F6', '#8B5CF6']; 
-            const color = colors[Math.floor(Math.random() * colors.length)];
-            
-            return `
-                <svg class="w-12 h-12" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Stem --><path d="M 50 100 V 60" stroke="#10B981" stroke-width="4" />
-                    <!-- Petals --><circle cx="50" cy="40" r="15" fill="${color}" opacity="0.7"/>
-                    <circle cx="35" cy="50" r="15" fill="${color}" opacity="0.7"/>
-                    <circle cx="65" cy="50" r="15" fill="${color}" opacity="0.7"/>
-                    <circle cx="50" cy="60" r="15" fill="${color}" opacity="0.7"/>
-                    <!-- Center --><circle cx="50" cy="50" r="12" fill="#FDE047"/>
-                </svg>
-            `;
-        }
-
-    </script>
 </body>
 </html>
