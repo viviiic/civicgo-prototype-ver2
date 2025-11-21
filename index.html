@@ -997,15 +997,44 @@
 </div>
 
 <script>
-    // --- 狀態管理 ---
+    // --- 狀態管理 (升級版：優先從 LocalStorage 讀取) ---
+    const STORAGE_KEY = 'civicgo_data_v3';
+    
     let state = {
         points: 1000,
         tasksCompleted: 0,
         flowers: [],
         acceptedTasks: [],
-        hasCheckedIn: false
+        completedTaskIds: [], // 新增：記錄已完成的任務 ID 以便過濾
+        hasCheckedIn: false,
+        lastLoginDate: new Date().toDateString() // 新增：用來重置每日簽到
     };
-    
+
+    // 初始化：嘗試讀取存檔
+    function loadState() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                state = { ...state, ...parsed };
+                
+                // 檢查是否跨日，若跨日則重置簽到狀態
+                if (state.lastLoginDate !== new Date().toDateString()) {
+                    state.hasCheckedIn = false;
+                    state.lastLoginDate = new Date().toDateString();
+                    saveState(); // 更新日期
+                }
+            } catch (e) {
+                console.error('讀取存檔失敗', e);
+            }
+        }
+    }
+
+    // 存檔函數
+    function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
     let selectedNPO = '';
 
     const postComments = {
@@ -1077,6 +1106,7 @@
         document.getElementById('profile-tasks-completed').innerText = state.tasksCompleted;
         document.getElementById('impact-count').innerText = state.tasksCompleted;
         
+        // 簽到按鈕狀態更新
         if (state.hasCheckedIn) {
             document.querySelectorAll('#page-home button[onclick^="checkInMood"]').forEach(btn => {
                  btn.disabled = true;
@@ -1099,7 +1129,7 @@
         }
 
         container.innerHTML = '';
-        state.flowers.forEach((color, index) => {
+        state.flowers.forEach((color) => {
             const flower = document.createElement('div');
             const delay = Math.random() * 2; 
             flower.className = 'living-flower w-10 h-10 flex items-end justify-center';
@@ -1138,7 +1168,13 @@
         `;
 
         const actionDiv = document.getElementById('modal-actions');
-        if (state.acceptedTasks.includes(taskId)) {
+        
+        // 判斷狀態：已完成 vs 已接受 vs 未接受
+        if (state.completedTaskIds && state.completedTaskIds.includes(taskId)) {
+             actionDiv.innerHTML = `
+                <button onclick="closeTaskModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">已完成</button>
+            `;
+        } else if (state.acceptedTasks.includes(taskId)) {
             actionDiv.innerHTML = `
                 <button onclick="closeTaskModal()" class="flex-1 py-3 rounded-xl font-bold text-gray-500 bg-gray-100">取消</button>
                 <button onclick="completeTask('${taskId}', ${task.points})" class="flex-1 py-3 rounded-xl font-bold text-white bg-teal-500 shadow-lg shadow-teal-200 hover:bg-teal-600">
@@ -1163,6 +1199,7 @@
     
     function acceptTask(taskId) {
         state.acceptedTasks.push(taskId);
+        saveState(); // 存檔
         closeTaskModal();
         updateMapPins();
     }
@@ -1183,7 +1220,13 @@
             const colors = ['pink', 'purple', 'yellow', 'red'];
             state.flowers.push(colors[Math.floor(Math.random() * colors.length)]);
             
+            // 移除進行中，加入已完成
             state.acceptedTasks = state.acceptedTasks.filter(id => id !== taskId);
+            if(!state.completedTaskIds) state.completedTaskIds = [];
+            state.completedTaskIds.push(taskId);
+            
+            saveState(); // 存檔
+
             document.getElementById('success-points').innerText = points;
             
             const successModal = document.getElementById('modal-success');
@@ -1191,6 +1234,7 @@
             successModal.classList.remove('hidden');
             requestAnimationFrame(() => successContent.classList.remove('scale-90'));
             
+            // 隱藏地圖上的 Pin
             const pin = document.querySelector(`.map-pin[onclick="openTaskModal('${taskId}')"]`);
             if(pin) pin.style.display = 'none';
 
@@ -1212,6 +1256,12 @@
             const existingLabel = pin.querySelector('.task-label');
             if(existingLabel) existingLabel.style.display = 'none';
             
+            // 如果已完成，直接隱藏
+            if (state.completedTaskIds && state.completedTaskIds.includes(taskId)) {
+                pin.style.display = 'none';
+                return;
+            }
+
             if (state.acceptedTasks.includes(taskId)) {
                 pin.classList.add('active');
                 if(!existingLabel) {
@@ -1343,6 +1393,7 @@
             showSimpleAlert('簽到成功！獲得 5 積分');
             state.points += 5;
             state.hasCheckedIn = true; 
+            saveState(); // 存檔
             updateUI();
         }, 200);
     }
@@ -1350,6 +1401,7 @@
     function redeemItem(cost, name) {
         if (state.points >= cost) {
             state.points -= cost;
+            saveState(); // 存檔
             updateUI();
             showSimpleAlert(`成功兌換：${name}`);
         } else {
@@ -1390,6 +1442,7 @@
         }
         
         state.points -= amount;
+        saveState(); // 存檔
         updateUI();
         closeDonateModal();
         showSimpleAlert(`感謝！已捐贈 ${amount} 積分給 ${selectedNPO}。`);
@@ -1470,8 +1523,12 @@
         }
     }
 
+    // 初始化：先讀取存檔，再更新介面
+    loadState();
     updateUI();
 </script>
 
+
 </body>
 </html>
+
