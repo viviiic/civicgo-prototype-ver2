@@ -27,6 +27,7 @@
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
                         'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'slide-left': 'slideLeft 0.3s ease-out forwards',
                         'glow': 'glow 2s ease-in-out infinite alternate',
                     },
                     keyframes: {
@@ -49,6 +50,10 @@
                         slideUp: {
                             '0%': { transform: 'translateY(100%)' },
                             '100%': { transform: 'translateY(0)' },
+                        },
+                        slideLeft: {
+                            '0%': { transform: 'translateX(100%)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' },
                         },
                         glow: {
                             '0%': { filter: 'drop-shadow(0 0 2px #fcd34d)' },
@@ -275,6 +280,33 @@
             height: 64px;
             font-size: 2rem;
         }
+
+        /* Onboarding Slides */
+        .onboarding-slide {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            animation: slide-left 0.3s ease-out;
+        }
+        .onboarding-slide.active {
+            display: flex;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            transition: all 0.3s;
+        }
+        .dot.active {
+            width: 20px;
+            background-color: #14b8a6;
+            border-radius: 99px;
+        }
     </style>
 </head>
 <body>
@@ -292,11 +324,94 @@
         </div>
         
         <div class="absolute bottom-12 w-full px-8">
-            <button onclick="goToPage('page-home')" class="w-full bg-white text-teal-600 font-bold py-4 rounded-full shadow-lg hover:bg-teal-50 transition-transform active:scale-95 flex items-center justify-center gap-3">
+            <!-- 修改：進入教學頁面 -->
+            <button onclick="goToPage('page-onboarding')" class="w-full bg-white text-teal-600 font-bold py-4 rounded-full shadow-lg hover:bg-teal-50 transition-transform active:scale-95 flex items-center justify-center gap-3">
                 <i class="fa-brands fa-line text-2xl"></i>
                 <span>LINE 帳號一鍵登入</span>
             </button>
             <p class="text-center text-teal-200/80 text-xs mt-4">登入即代表同意服務條款與隱私權政策</p>
+        </div>
+    </div>
+
+    <!-- ==================== 新增：教學頁面 (Onboarding) ==================== -->
+    <div id="page-onboarding" class="page bg-white">
+        <!-- Slide 1: 探索 -->
+        <div class="onboarding-slide active" id="slide-1">
+            <div class="w-full flex-grow flex flex-col justify-center items-center">
+                <div class="w-64 h-64 bg-blue-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-map-location-dot text-8xl text-blue-500 animate-float"></i>
+                    <div class="absolute top-10 right-10 w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center text-white animate-bounce">
+                        <i class="fa-solid fa-star"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">探索微型任務</h2>
+                <p class="text-gray-500 leading-relaxed px-4">
+                    打開地圖，發現身邊 10 分鐘內可完成的公益行動。<br>
+                    讓善意不再遙不可及。
+                </p>
+                <!-- 裝飾性列表 (仿圖1) -->
+                <div class="mt-8 w-full max-w-xs space-y-3">
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
+                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-teal-500 shadow-sm"><i class="fa-solid fa-location-crosshairs"></i></div>
+                        <span class="text-sm font-medium text-gray-600">LBS 即時定位</span>
+                    </div>
+                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
+                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-teal-500 shadow-sm"><i class="fa-solid fa-list-check"></i></div>
+                        <span class="text-sm font-medium text-gray-600">多樣化在地需求</span>
+                    </div>
+                </div>
+            </div>
+            <div class="w-full pb-12 px-8">
+                <div class="flex justify-center gap-2 mb-6">
+                    <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <button onclick="nextSlide(2)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">下一步</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: 驗證 -->
+        <div class="onboarding-slide" id="slide-2">
+            <div class="w-full flex-grow flex flex-col justify-center items-center">
+                 <div class="w-64 h-64 bg-teal-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-camera text-8xl text-teal-500 animate-float"></i>
+                    <div class="absolute bottom-10 left-4 w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-green-500">
+                        <i class="fa-solid fa-check text-3xl"></i>
+                    </div>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">只需一拍，AI 驗證</h2>
+                <p class="text-gray-500 leading-relaxed px-4">
+                    完成任務後拍照上傳，AI 自動識別。<br>
+                    即時獲得積分回饋，累積您的信用。
+                </p>
+            </div>
+            <div class="w-full pb-12 px-8">
+                <div class="flex justify-center gap-2 mb-6">
+                    <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
+                </div>
+                <button onclick="nextSlide(3)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">下一步</button>
+            </div>
+        </div>
+
+        <!-- Slide 3: 獎勵與花園 -->
+        <div class="onboarding-slide" id="slide-3">
+            <div class="w-full flex-grow flex flex-col justify-center items-center">
+                <div class="w-64 h-64 bg-pink-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-gift text-8xl text-pink-400 animate-float"></i>
+                     <i class="fa-solid fa-seedling text-4xl text-green-500 absolute top-12 left-12 animate-bounce"></i>
+                     <i class="fa-solid fa-clover text-4xl text-emerald-500 absolute bottom-12 right-12 animate-bounce" style="animation-delay: 0.5s"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">打造城市花園</h2>
+                <p class="text-gray-500 leading-relaxed px-4">
+                    用善行灌溉花朵，解鎖稀有植物。<br>
+                    積分還可兌換 LINE POINTS 與商家優惠！
+                </p>
+            </div>
+            <div class="w-full pb-12 px-8">
+                 <div class="flex justify-center gap-2 mb-6">
+                    <div class="dot"></div><div class="dot"></div><div class="dot active"></div>
+                </div>
+                <button onclick="goToPage('page-home')" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">開始體驗 CivicGo</button>
+            </div>
         </div>
     </div>
 
@@ -1358,7 +1473,7 @@
     // 捐贈狀態
     let selectedNPO = '';
 
-    // 留言資料 (Mock)
+    // 留言資料 (Mock) - 修正為兩個貼文有不同留言
     const postComments = {
         'post1': [
             { user: 'Alice', content: '哇！太棒了，我也想參加下次的活動！😍' },
@@ -1366,16 +1481,16 @@
             { user: 'Charlie', content: '辛苦了！' }
         ],
         'post2': [
-             { user: 'David', content: '我也有一堆舊書想捐，請問還有收嗎？' }
+             { user: 'David', content: '這活動很有意義，我也整理了一些童書！' }
         ]
     };
     let currentPostId = '';
 
     // --- 資料庫 ---
     const tasks = {
-        'task1': { id: 'task1', title: '隨手撿垃圾', type: '環境', time: '10 min', points: 10, icon: 'fa-trash-can', color: 'text-red-500', desc: '請協助清理進德路周邊的塑膠垃圾。' },
-        'task2': { id: 'task2', title: '捐贈二手書', type: '資源', time: '30 min', points: 20, icon: 'fa-book', color: 'text-blue-500', desc: '圖書館募集兒童繪本，請送至櫃台。 (需人工驗證)' },
-        'task3': { id: 'task3', title: '募集冬衣', type: '公益', time: '20 min', points: 15, icon: 'fa-shirt', color: 'text-yellow-500', desc: '為獨居長輩募集保暖衣物。' }
+        'task1': { id: 'task1', title: '隨手撿垃圾', type: '環境', time: '10 min', points: 10, icon: 'fa-trash-can', color: 'text-red-500', desc: '請協助清理進德路周邊的塑膠垃圾。', validation: 'AI 圖像辨識' },
+        'task2': { id: 'task2', title: '捐贈二手書', type: '資源', time: '30 min', points: 20, icon: 'fa-book', color: 'text-blue-500', desc: '圖書館募集兒童繪本，請送至櫃台。', validation: '人工審核' },
+        'task3': { id: 'task3', title: '募集二手冬衣', type: '公益', time: '20 min', points: 15, icon: 'fa-shirt', color: 'text-yellow-500', desc: '為獨居長輩募集保暖衣物。', validation: '志工確認' }
     };
 
     // --- 頁面導航 ---
@@ -1410,6 +1525,17 @@
                     updateMapPins();
                 }
             }
+        }
+    }
+    
+    // --- Onboarding 頁面邏輯 ---
+    function nextSlide(slideIndex) {
+        // 隱藏所有 slides
+        document.querySelectorAll('.onboarding-slide').forEach(el => el.classList.remove('active'));
+        // 顯示目標 slide
+        const targetSlide = document.getElementById(`slide-${slideIndex}`);
+        if (targetSlide) {
+            targetSlide.classList.add('active');
         }
     }
 
@@ -1469,6 +1595,9 @@
         const content = document.getElementById('modal-content');
         const inject = document.getElementById('task-detail-inject');
         
+        // 修正：根據任務類型顯示不同的驗證方式
+        let validationText = task.validation || 'AI 圖像辨識';
+        
         inject.innerHTML = `
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center ${task.color} text-2xl">
@@ -1482,7 +1611,10 @@
                     </div>
                 </div>
             </div>
-            <p class="text-gray-600 mb-6 text-sm leading-relaxed">${task.desc}</p>
+            <p class="text-gray-600 mb-2 text-sm leading-relaxed">${task.desc}</p>
+            <div class="bg-blue-50 p-2 rounded-lg text-xs text-blue-600 mb-6">
+                <i class="fa-solid fa-circle-check mr-1"></i> 驗證方式：${validationText}
+            </div>
             <div class="flex gap-3" id="modal-actions">
                 <!-- 按鈕由 JS 決定 -->
             </div>
@@ -1620,6 +1752,7 @@
                 </div>
             </div>
             <p class="text-gray-700 text-sm mb-3">${input.value}</p>
+            <!-- 移除自動插入圖片 -->
             <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
                 <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>0</span></button>
                 <button onclick="showSimpleAlert('留言功能開發中！')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>0</span></button>
