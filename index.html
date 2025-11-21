@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CivicGo 2.0 - 讓改變從巷口開始</title>
+    <title>CivicGo 3.0 - 讓改變從巷口開始</title>
     <!-- 載入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 設定自定義顏色配置 -->
@@ -15,7 +15,7 @@
                         primary: '#14b8a6', /* Teal-500: 清新、信任 */
                         primaryDark: '#0f766e',
                         secondary: '#f59e0b', /* Amber-500: 溫暖、活力 */
-                        bgBase: '#f0fdfa', 
+                        bgBase: '#f8fafc', 
                     },
                     fontFamily: {
                         sans: ['Inter', 'Noto Sans TC', 'sans-serif'],
@@ -196,12 +196,8 @@
         
         /* 地圖互動 - 移除 grab cursor */
         #map-viewport {
-            /* cursor: grab; */ 
             background-color: #F5F3EF; /* 地圖底色 */
         }
-        /* #map-viewport.grabbing {
-            cursor: grabbing;
-        } */
 
         @keyframes bounce {
             0%, 100% { transform: rotate(-45deg) translateY(0); }
@@ -303,9 +299,18 @@
             transition: all 0.3s;
         }
         .dot.active {
-            width: 20px;
+            width: 24px;
             background-color: #14b8a6;
             border-radius: 99px;
+        }
+
+        /* 留言樣式 */
+        .comment-bubble {
+            background-color: #f1f5f9;
+            padding: 0.75rem;
+            border-radius: 0 1rem 1rem 1rem;
+            font-size: 0.875rem;
+            color: #334155;
         }
     </style>
 </head>
@@ -316,20 +321,20 @@
     <!-- ==================== 1. 啟動頁 (Splash) ==================== -->
     <div id="page-splash" class="page active bg-gradient-to-br from-teal-500 to-emerald-600 items-center justify-center text-white p-8">
         <div class="text-center animate-float">
-            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
-                <i class="fa-solid fa-seedling text-5xl text-teal-600"></i>
+            <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <i class="fa-solid fa-seedling text-6xl text-teal-600"></i>
             </div>
-            <h1 class="text-4xl font-bold mb-2 tracking-wider">CivicGo</h1>
-            <p class="text-teal-100 text-lg font-light">讓改變，從巷口開始</p>
+            <h1 class="text-5xl font-bold mb-2 tracking-wider">CivicGo</h1>
+            <p class="text-teal-100 text-xl font-light tracking-widest">讓改變，從巷口開始</p>
         </div>
         
-        <div class="absolute bottom-12 w-full px-8">
+        <div class="absolute bottom-16 w-full px-8">
             <!-- 修改：進入教學頁面 -->
-            <button onclick="goToPage('page-onboarding')" class="w-full bg-white text-teal-600 font-bold py-4 rounded-full shadow-lg hover:bg-teal-50 transition-transform active:scale-95 flex items-center justify-center gap-3">
-                <i class="fa-brands fa-line text-2xl"></i>
+            <button onclick="goToPage('page-onboarding')" class="w-full bg-white text-teal-600 font-bold py-4 rounded-full shadow-lg hover:bg-teal-50 transition-transform active:scale-95 flex items-center justify-center gap-3 text-lg">
+                <i class="fa-brands fa-line text-3xl text-[#06C755]"></i>
                 <span>LINE 帳號一鍵登入</span>
             </button>
-            <p class="text-center text-teal-200/80 text-xs mt-4">登入即代表同意服務條款與隱私權政策</p>
+            <p class="text-center text-teal-200/80 text-xs mt-6">登入即代表同意服務條款與隱私權政策</p>
         </div>
     </div>
 
@@ -338,79 +343,68 @@
         <!-- Slide 1: 探索 -->
         <div class="onboarding-slide active" id="slide-1">
             <div class="w-full flex-grow flex flex-col justify-center items-center">
-                <div class="w-64 h-64 bg-blue-50 rounded-full flex items-center justify-center mb-10 relative">
-                    <i class="fa-solid fa-map-location-dot text-8xl text-blue-500 animate-float"></i>
-                    <div class="absolute top-10 right-10 w-12 h-12 bg-amber-400 rounded-full flex items-center justify-center text-white animate-bounce">
-                        <i class="fa-solid fa-star"></i>
+                <div class="w-72 h-72 bg-blue-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-map-location-dot text-9xl text-blue-500 animate-float"></i>
+                    <div class="absolute top-4 right-4 w-16 h-16 bg-amber-400 rounded-full flex items-center justify-center text-white animate-bounce shadow-md">
+                        <i class="fa-solid fa-star text-2xl"></i>
                     </div>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">探索微型任務</h2>
-                <p class="text-gray-500 leading-relaxed px-4">
-                    打開地圖，發現身邊 10 分鐘內可完成的公益行動。<br>
-                    讓善意不再遙不可及。
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">探索微型任務</h2>
+                <p class="text-gray-500 leading-relaxed px-6 text-lg">
+                    打開地圖，發現身邊 10 分鐘內<br>可完成的公益行動。<br>
+                    <span class="text-teal-600 font-bold">讓善意不再遙不可及。</span>
                 </p>
-                <!-- 裝飾性列表 (仿圖1) -->
-                <div class="mt-8 w-full max-w-xs space-y-3">
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
-                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-teal-500 shadow-sm"><i class="fa-solid fa-location-crosshairs"></i></div>
-                        <span class="text-sm font-medium text-gray-600">LBS 即時定位</span>
-                    </div>
-                    <div class="flex items-center gap-3 bg-slate-50 p-3 rounded-xl">
-                        <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-teal-500 shadow-sm"><i class="fa-solid fa-list-check"></i></div>
-                        <span class="text-sm font-medium text-gray-600">多樣化在地需求</span>
-                    </div>
-                </div>
             </div>
             <div class="w-full pb-12 px-8">
-                <div class="flex justify-center gap-2 mb-6">
+                <div class="flex justify-center gap-3 mb-8">
                     <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
                 </div>
-                <button onclick="nextSlide(2)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">下一步</button>
+                <button onclick="nextSlide(2)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600 transition text-lg">下一步</button>
             </div>
         </div>
 
         <!-- Slide 2: 驗證 -->
         <div class="onboarding-slide" id="slide-2">
             <div class="w-full flex-grow flex flex-col justify-center items-center">
-                 <div class="w-64 h-64 bg-teal-50 rounded-full flex items-center justify-center mb-10 relative">
-                    <i class="fa-solid fa-camera text-8xl text-teal-500 animate-float"></i>
-                    <div class="absolute bottom-10 left-4 w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center text-green-500">
-                        <i class="fa-solid fa-check text-3xl"></i>
+                 <div class="w-72 h-72 bg-teal-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-camera text-9xl text-teal-500 animate-float"></i>
+                    <div class="absolute bottom-6 left-6 w-20 h-20 bg-white rounded-2xl shadow-lg flex items-center justify-center text-green-500 animate-pulse-slow">
+                        <i class="fa-solid fa-check text-4xl"></i>
                     </div>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">只需一拍，AI 驗證</h2>
-                <p class="text-gray-500 leading-relaxed px-4">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">只需一拍，AI 驗證</h2>
+                <p class="text-gray-500 leading-relaxed px-6 text-lg">
                     完成任務後拍照上傳，AI 自動識別。<br>
-                    即時獲得積分回饋，累積您的信用。
+                    即時獲得<span class="text-teal-600 font-bold">積分回饋</span>，累積您的信用。
                 </p>
             </div>
             <div class="w-full pb-12 px-8">
-                <div class="flex justify-center gap-2 mb-6">
+                <div class="flex justify-center gap-3 mb-8">
                     <div class="dot"></div><div class="dot active"></div><div class="dot"></div>
                 </div>
-                <button onclick="nextSlide(3)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">下一步</button>
+                <button onclick="nextSlide(3)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600 transition text-lg">下一步</button>
             </div>
         </div>
 
         <!-- Slide 3: 獎勵與花園 -->
         <div class="onboarding-slide" id="slide-3">
             <div class="w-full flex-grow flex flex-col justify-center items-center">
-                <div class="w-64 h-64 bg-pink-50 rounded-full flex items-center justify-center mb-10 relative">
-                    <i class="fa-solid fa-gift text-8xl text-pink-400 animate-float"></i>
-                     <i class="fa-solid fa-seedling text-4xl text-green-500 absolute top-12 left-12 animate-bounce"></i>
-                     <i class="fa-solid fa-clover text-4xl text-emerald-500 absolute bottom-12 right-12 animate-bounce" style="animation-delay: 0.5s"></i>
+                <div class="w-72 h-72 bg-pink-50 rounded-full flex items-center justify-center mb-10 relative">
+                    <i class="fa-solid fa-gift text-9xl text-pink-400 animate-float"></i>
+                     <i class="fa-solid fa-seedling text-5xl text-green-500 absolute top-10 left-10 animate-bounce"></i>
+                     <i class="fa-solid fa-clover text-5xl text-emerald-500 absolute bottom-10 right-10 animate-bounce" style="animation-delay: 0.5s"></i>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-4">打造城市花園</h2>
-                <p class="text-gray-500 leading-relaxed px-4">
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">打造城市花園</h2>
+                <p class="text-gray-500 leading-relaxed px-6 text-lg">
                     用善行灌溉花朵，解鎖稀有植物。<br>
-                    積分還可兌換 LINE POINTS 與商家優惠！
+                    積分還可兌換 <span class="text-teal-600 font-bold">LINE POINTS</span>！
                 </p>
             </div>
             <div class="w-full pb-12 px-8">
-                 <div class="flex justify-center gap-2 mb-6">
+                 <div class="flex justify-center gap-3 mb-8">
                     <div class="dot"></div><div class="dot"></div><div class="dot active"></div>
                 </div>
-                <button onclick="goToPage('page-home')" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600">開始體驗 CivicGo</button>
+                <button onclick="goToPage('page-home')" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600 transition text-lg">開始體驗 CivicGo</button>
             </div>
         </div>
     </div>
@@ -516,7 +510,7 @@
                     </div>
                     <div class="p-4 flex items-center gap-3">
                         <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <p class="text-sm text-gray-600 flex-grow">「募集二手冬衣」任務已更新地點。</p>
+                        <p class="text-sm text-gray-600 flex-grow">「募集二手冬衣」任務已更新地點，請查看詳情。</p>
                         <span class="text-xs text-gray-400">昨天</span>
                     </div>
                 </div>
@@ -587,6 +581,42 @@
                         <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
                             <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>8</span></button>
                             <button onclick="openComments('post2')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>1</span></button>
+                        </div>
+                    </div>
+                    <!-- 範例貼文 3 (新增更多人) -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="https://placehold.co/40x40/f59e0b/ffffff?text=U" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">UrbanHero99</p>
+                                    <p class="text-xs text-gray-400">昨天</p>
+                                </div>
+                            </div>
+                            <span class="bg-purple-50 text-purple-600 text-[10px] px-2 py-1 rounded-full">#社區關懷</span>
+                        </div>
+                        <p class="text-gray-700 text-sm mb-3">今天幫隔壁阿嬤去領了藥，順便聊聊天，發現其實長輩很需要陪伴呢！👵❤️</p>
+                        <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
+                            <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>23</span></button>
+                            <button onclick="openComments('post3')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>5</span></button>
+                        </div>
+                    </div>
+                    <!-- 範例貼文 4 (新增更多人) -->
+                    <div class="bg-white p-4 rounded-2xl shadow-sm">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center gap-2">
+                                <img src="https://placehold.co/40x40/14b8a6/ffffff?text=S" class="w-10 h-10 rounded-full">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-800">SunnyDay</p>
+                                    <p class="text-xs text-gray-400">昨天</p>
+                                </div>
+                            </div>
+                            <span class="bg-orange-50 text-orange-600 text-[10px] px-2 py-1 rounded-full">#環境維護</span>
+                        </div>
+                        <p class="text-gray-700 text-sm mb-3">路邊的小花園整理完畢！看到乾淨的街道心情真好～ 🌸</p>
+                        <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-50 pt-3">
+                            <button onclick="toggleLike(this)" class="flex items-center gap-1 hover:text-red-500 transition"><i class="fa-regular fa-heart"></i> <span>15</span></button>
+                            <button onclick="openComments('post4')" class="flex items-center gap-1 hover:text-blue-500 transition"><i class="fa-regular fa-comment"></i> <span>2</span></button>
                         </div>
                     </div>
                 </div>
@@ -979,6 +1009,19 @@
                     <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
                         <i class="fa-solid fa-leaf text-3xl text-red-400 mb-2"></i>
                         <span class="text-xs text-gray-600">玫瑰</span>
+                    </div>
+                    <!-- 新增植物 (5-7) -->
+                     <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-solid fa-cannabis text-3xl text-blue-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">風信子</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-solid fa-spa text-3xl text-pink-300 mb-2"></i>
+                        <span class="text-xs text-gray-600">康乃馨</span>
+                    </div>
+                    <div class="bg-white rounded-xl p-3 flex flex-col items-center shadow-sm">
+                        <i class="fa-brands fa-envira text-3xl text-emerald-400 mb-2"></i>
+                        <span class="text-xs text-gray-600">百合</span>
                     </div>
                 </div>
             </div>
@@ -1473,7 +1516,7 @@
     // 捐贈狀態
     let selectedNPO = '';
 
-    // 留言資料 (Mock) - 修正為兩個貼文有不同留言
+    // 留言資料 (Mock)
     const postComments = {
         'post1': [
             { user: 'Alice', content: '哇！太棒了，我也想參加下次的活動！😍' },
@@ -1481,16 +1524,16 @@
             { user: 'Charlie', content: '辛苦了！' }
         ],
         'post2': [
-             { user: 'David', content: '這活動很有意義，我也整理了一些童書！' }
+             { user: 'David', content: '我也有一堆舊書想捐，請問還有收嗎？' }
         ]
     };
     let currentPostId = '';
 
     // --- 資料庫 ---
     const tasks = {
-        'task1': { id: 'task1', title: '隨手撿垃圾', type: '環境', time: '10 min', points: 10, icon: 'fa-trash-can', color: 'text-red-500', desc: '請協助清理進德路周邊的塑膠垃圾。', validation: 'AI 圖像辨識' },
-        'task2': { id: 'task2', title: '捐贈二手書', type: '資源', time: '30 min', points: 20, icon: 'fa-book', color: 'text-blue-500', desc: '圖書館募集兒童繪本，請送至櫃台。', validation: '人工審核' },
-        'task3': { id: 'task3', title: '募集二手冬衣', type: '公益', time: '20 min', points: 15, icon: 'fa-shirt', color: 'text-yellow-500', desc: '為獨居長輩募集保暖衣物。', validation: '志工確認' }
+        'task1': { id: 'task1', title: '隨手撿垃圾', type: '環境', time: '10 min', points: 10, icon: 'fa-trash-can', color: 'text-red-500', desc: '請協助清理進德路周邊的塑膠垃圾。' },
+        'task2': { id: 'task2', title: '捐贈二手書', type: '資源', time: '30 min', points: 20, icon: 'fa-book', color: 'text-blue-500', desc: '圖書館募集兒童繪本，請送至櫃台。 (需人工驗證)' },
+        'task3': { id: 'task3', title: '募集二手冬衣', type: '公益', time: '20 min', points: 15, icon: 'fa-shirt', color: 'text-yellow-500', desc: '為獨居長輩募集保暖衣物。' }
     };
 
     // --- 頁面導航 ---
@@ -1527,16 +1570,19 @@
             }
         }
     }
-    
-    // --- Onboarding 頁面邏輯 ---
+
+    // --- 新增：教學頁面 nextSlide 函式 ---
     function nextSlide(slideIndex) {
-        // 隱藏所有 slides
-        document.querySelectorAll('.onboarding-slide').forEach(el => el.classList.remove('active'));
-        // 顯示目標 slide
-        const targetSlide = document.getElementById(`slide-${slideIndex}`);
-        if (targetSlide) {
-            targetSlide.classList.add('active');
-        }
+        // Hide all slides
+        document.querySelectorAll('.onboarding-slide').forEach(slide => {
+            slide.classList.remove('active');
+        });
+        
+        // Show target slide
+        const target = document.getElementById(`slide-${slideIndex}`);
+        if(target) target.classList.add('active');
+        
+        // Update dots (optional logic if needed, but currently dots are hardcoded per slide)
     }
 
     // --- 功能邏輯 ---
@@ -1595,9 +1641,6 @@
         const content = document.getElementById('modal-content');
         const inject = document.getElementById('task-detail-inject');
         
-        // 修正：根據任務類型顯示不同的驗證方式
-        let validationText = task.validation || 'AI 圖像辨識';
-        
         inject.innerHTML = `
             <div class="flex items-center gap-4 mb-4">
                 <div class="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center ${task.color} text-2xl">
@@ -1611,10 +1654,7 @@
                     </div>
                 </div>
             </div>
-            <p class="text-gray-600 mb-2 text-sm leading-relaxed">${task.desc}</p>
-            <div class="bg-blue-50 p-2 rounded-lg text-xs text-blue-600 mb-6">
-                <i class="fa-solid fa-circle-check mr-1"></i> 驗證方式：${validationText}
-            </div>
+            <p class="text-gray-600 mb-6 text-sm leading-relaxed">${task.desc}</p>
             <div class="flex gap-3" id="modal-actions">
                 <!-- 按鈕由 JS 決定 -->
             </div>
