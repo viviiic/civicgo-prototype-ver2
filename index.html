@@ -356,7 +356,7 @@
                 </p>
             </div>
             <div class="w-full pb-12 px-8">
-                <div class="flex justify-center gap-3 mb-8">
+                <div class="flex justify中心 gap-3 mb-8">
                     <div class="dot active"></div><div class="dot"></div><div class="dot"></div>
                 </div>
                 <button onclick="nextSlide(2)" class="w-full bg-teal-500 text-white font-bold py-4 rounded-full shadow-lg hover:bg-teal-600 transition text-lg">下一步</button>
@@ -452,7 +452,7 @@
                 </div>
             </div>
 
-            <!-- 2. 總數據卡 -->
+            <!-- 2. 總數據卡 + 分享 -->
             <div class="bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
                 <div class="absolute top-0 right-0 opacity-10 transform translate-x-4 translate-y-4">
                     <i class="fa-solid fa-trophy text-9xl"></i>
@@ -463,6 +463,15 @@
                     <span class="text-lg">項微任務</span>
                 </div>
                 <p class="text-teal-50/80 text-xs mt-2">感謝您為社區的每一次付出！</p>
+
+                <!-- 新增：分享 CivicGo 按鈕 -->
+                <button
+                    onclick="shareApp()"
+                    class="mt-4 w-full flex items-center justify-center gap-2 text-sm bg-white text-teal-700 font-medium py-2.5 rounded-full shadow-sm active:scale-95"
+                >
+                    <i class="fa-solid fa-share-nodes"></i>
+                    <span>分享 CivicGo 給朋友</span>
+                </button>
             </div>
 
             <!-- 3. 活動公告 -->
@@ -508,11 +517,7 @@
                         <p class="text-sm text-gray-600 flex-grow">您的任務「隨手撿垃圾」已通過驗證！</p>
                         <span class="text-xs text-gray-400">1小時前</span>
                     </div>
-                    <div class="p-4 flex items-center gap-3">
-                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
-                        <p class="text-sm text-gray-600 flex-grow">「募集二手冬衣」任務已更新地點，請查看詳情。</p>
-                        <span class="text-xs text-gray-400">昨天</span>
-                    </div>
+                    <!-- 第二則已刪除，保留單一通知 -->
                 </div>
             </div>
         </div>
@@ -523,15 +528,11 @@
     <div id="page-community" class="page bg-slate-50">
         <div class="pt-12 pb-2 px-4 bg-white shadow-sm z-10">
             <h1 class="text-xl font-bold text-center mb-4 text-gray-800">社群動態</h1>
-            <!-- 膠囊式分頁 -->
-            <div class="bg-slate-100 p-1 rounded-full flex">
-                <button onclick="switchTab('feed')" id="btn-feed" class="flex-1 py-2 rounded-full text-sm font-bold shadow-sm bg-white text-teal-600 transition-all">動態牆</button>
-                <button onclick="switchTab('rank')" id="btn-rank" class="flex-1 py-2 rounded-full text-sm font-bold text-slate-500 transition-all">排行榜</button>
-            </div>
+            <!-- 排行榜分頁已移除，保留純「社群動態」標題 -->
         </div>
 
         <div class="flex-grow overflow-y-auto hide-scrollbar pb-20">
-            <!-- 動態牆 Tab -->
+            <!-- 動態牆 -->
             <div id="tab-feed" class="p-4 space-y-4">
                 <!-- 發文區 -->
                 <div class="bg-white p-4 rounded-2xl shadow-sm">
@@ -622,43 +623,7 @@
                 </div>
             </div>
 
-            <!-- 排行榜 Tab -->
-            <div id="tab-rank" class="hidden p-4 space-y-3">
-                <!-- 自己 -->
-                <div class="bg-teal-50 border border-teal-200 p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-                    <span class="font-bold text-teal-600 text-lg">5</span>
-                    <!-- 修正頭像 -->
-                    <div class="app-logo-avatar w-12 h-12 flex-shrink-0 border-2 border-white"><i class="fa-solid fa-seedling"></i></div>
-                    <div class="flex-grow">
-                        <p class="font-bold text-gray-800">NCUEfreshman</p>
-                        <p class="text-xs text-gray-500">已完成 <span id="rank-task-count">0</span> 件任務</p>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold text-teal-600 text-xl" id="rank-score">0</p>
-                        <p class="text-[10px] text-gray-400">積分</p>
-                    </div>
-                </div>
-                <!-- 第一名 -->
-                <div class="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-                    <span class="font-bold text-amber-500 text-lg w-4 text-center">1</span>
-                    <img src="https://placehold.co/48x48/f59e0b/ffffff?text=U" class="w-12 h-12 rounded-full">
-                    <div class="flex-grow">
-                        <p class="font-bold text-gray-800">UrbanExplorer22</p>
-                        <p class="text-xs text-gray-500">已完成 15 件任務</p>
-                    </div>
-                    <p class="font-bold text-gray-600 text-xl">510</p>
-                </div>
-                 <!-- 第二名 -->
-                 <div class="bg-white p-4 rounded-2xl flex items-center gap-4 shadow-sm">
-                    <span class="font-bold text-gray-400 text-lg w-4 text-center">2</span>
-                    <img src="https://placehold.co/48x48/dbeafe/1e40af?text=G" class="w-12 h-12 rounded-full">
-                    <div class="flex-grow">
-                        <p class="font-bold text-gray-800">GreenGuardian8</p>
-                        <p class="text-xs text-gray-500">已完成 13 件任務</p>
-                    </div>
-                    <p class="font-bold text-gray-600 text-xl">420</p>
-                </div>
-            </div>
+            <!-- 排行榜 Tab 已刪除 -->
         </div>
     </div>
 
@@ -823,7 +788,7 @@
                 <div class="relative">
                     <!-- 修正頭像 -->
                     <div class="app-logo-avatar app-logo-avatar-lg border-4 border-teal-50"><i class="fa-solid fa-seedling"></i></div>
-                    <div class="absolute bottom-0 right-0 w-5 h-5 bg-amber-400 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold">1</div>
+                    <div class="absolute bottom-0 right-0 w-5 h-5 bg-amber-400 rounded-full border-2 border-white flex items-center justify中心 text-[10px] text-white font-bold">1</div>
                 </div>
                 <div class="flex-grow">
                     <h2 class="text-xl font-bold text-gray-800">Hi, NCUEfreshman</h2>
@@ -1098,8 +1063,8 @@
                 <p class="text-gray-800 font-bold">夥伴</p>
                 <div class="bg-slate-50 p-2 rounded-lg mt-4 text-xs text-slate-500">至今平台已有 2,000 位鄰里英雄</div>
             </div>
-            <!-- 新增：分享按鈕 -->
-            <button onclick="showSimpleAlert('已產生影響力圖片，快分享給朋友！')" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xl shadow-lg hover:bg-teal-600 transition mt-4 animate-fade-in-up" style="animation-delay: 0.4s">
+            <!-- 新增：改為呼叫 shareApp 分享成就 -->
+            <button onclick="shareApp()" class="w-full bg-teal-500 text-white font-bold py-3 rounded-xlshadow-lg hover:bg-teal-600 transition mt-4 animate-fade-in-up" style="animation-delay: 0.4s">
                 <i class="fa-solid fa-share-nodes mr-2"></i> 分享我的成就
             </button>
         </div>
@@ -1361,7 +1326,7 @@
                     <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-orange-500"><i class="fa-solid fa-wheelchair"></i></div>
                     <span class="font-medium text-gray-700">伊甸基金會</span>
                 </button>
-                <button onclick="selectNPO(this, '家扶中心')" class="npo-option w-full text-left p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-3">
+                <button onclick="selectNPO(this, '家扶中心')" class="npo-option w-full text左 p-3 rounded-xl border border-slate-100 hover:border-teal-500 hover:bg-teal-50 transition flex items-center gap-3">
                     <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-500"><i class="fa-solid fa-child"></i></div>
                     <span class="font-medium text-gray-700">家扶中心</span>
                 </button>
@@ -1581,8 +1546,6 @@
         // Show target slide
         const target = document.getElementById(`slide-${slideIndex}`);
         if(target) target.classList.add('active');
-        
-        // Update dots (optional logic if needed, but currently dots are hardcoded per slide)
     }
 
     // --- 功能邏輯 ---
@@ -1596,7 +1559,8 @@
         document.getElementById('profile-tasks-completed').innerText = state.tasksCompleted;
         document.getElementById('impact-count').innerText = state.tasksCompleted;
         document.getElementById('impact-hours').innerText = (state.tasksCompleted * 0.2).toFixed(1);
-        document.getElementById('rank-task-count').innerText = state.tasksCompleted;
+        const rankTask = document.getElementById('rank-task-count');
+        if (rankTask) rankTask.innerText = state.tasksCompleted;
         
         // 簽到狀態
         if (state.hasCheckedIn) {
@@ -1751,29 +1715,6 @@
 
 
     // --- 社群功能 ---
-    function switchTab(tab) {
-        const btnFeed = document.getElementById('btn-feed');
-        const btnRank = document.getElementById('btn-rank');
-        const tabFeed = document.getElementById('tab-feed');
-        const tabRank = document.getElementById('tab-rank');
-
-        if (tab === 'feed') {
-            btnFeed.classList.add('bg-white', 'text-teal-600', 'shadow-sm');
-            btnFeed.classList.remove('text-slate-500');
-            btnRank.classList.remove('bg-white', 'text-teal-600', 'shadow-sm');
-            btnRank.classList.add('text-slate-500');
-            tabFeed.classList.remove('hidden');
-            tabRank.classList.add('hidden');
-        } else {
-            btnRank.classList.add('bg-white', 'text-teal-600', 'shadow-sm');
-            btnRank.classList.remove('text-slate-500');
-            btnFeed.classList.remove('bg-white', 'text-teal-600', 'shadow-sm');
-            btnFeed.classList.add('text-slate-500');
-            tabRank.classList.remove('hidden');
-            tabFeed.classList.add('hidden');
-        }
-    }
-
     function addPost() {
         const input = document.getElementById('post-input');
         if(!input.value.trim()) return;
@@ -1960,6 +1901,31 @@
         }, 2000);
     }
 
+    // --- 新增：分享功能 (全站共用) ---
+    function shareApp() {
+        const shareData = {
+            title: 'CivicGo 3.0 - 讓改變從巷口開始',
+            text: '我在用 CivicGo 做 10 分鐘就能完成的城市任務，一起來試試看！',
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch((err) => {
+                console.log('分享取消或失敗：', err);
+            });
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(shareData.url)
+                .then(() => {
+                    showSimpleAlert('已複製分享連結，貼給朋友就可以了！');
+                })
+                .catch(() => {
+                    showSimpleAlert('複製網址失敗，請改用瀏覽器的分享功能。');
+                });
+        } else {
+            showSimpleAlert('您的裝置不支援系統分享，請直接複製網址分享給朋友。');
+        }
+    }
+
     function showPartnerInfo(name, desc) {
         const alertBox = document.createElement('div');
         alertBox.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-6';
@@ -1994,6 +1960,9 @@
             modal.classList.add('hidden');
         }
     }
+
+    // 初始化
+    updateUI();
 </script>
 
 </body>
